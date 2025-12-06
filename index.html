@@ -1,17 +1,16 @@
-<!-- START OF FILE ai_studio_code (Christmas_Graphics_Update).html -->
+<!-- START OF FILE ai_studio_code (Christmas_Final_Clean_v5).html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OBSERVATION DUTY: CHRISTMAS HD</title>
+    <title>OBSERVATION DUTY: CHRISTMAS CLEAN</title>
     <style>
         :root {
             --bg-color: #050505;
             --ui-bg: #0f0f0f;
             --text: #33ff33;
             --alert: #ff3333;
-            --crt-curvature: inset 0 0 100px rgba(0,0,0,0.9);
         }
         body { 
             margin: 0; background: #000; height: 100vh; height: 100dvh; 
@@ -36,6 +35,7 @@
             background: black; 
             justify-content: center; align-items: center;
             overflow: hidden;
+            will-change: transform;
         }
         .jump-face {
             width: 100%; height: 100%;
@@ -51,15 +51,15 @@
         #monitor-frame {
             flex: 3; background: #080808; padding: 15px;
             display: flex; flex-direction: column; position: relative;
-            box-shadow: inset 0 0 50px #000; /* Глубина корпуса */
+            box-shadow: inset 0 0 40px #000; 
         }
         #screen {
             flex-grow: 1; background: #050505; position: relative;
             border: 4px solid #1a1a1a; overflow: hidden;
-            box-shadow: 0 0 30px rgba(0,0,0,1);
+            box-shadow: 0 0 20px rgba(0,0,0,1);
             cursor: crosshair;
             touch-action: none;
-            border-radius: 4px; /* Скругление углов экрана */
+            border-radius: 4px;
         }
         
         /* --- ГИРЛЯНДА --- */
@@ -78,20 +78,20 @@
             width: 8px; height: 12px; border-radius: 50%; 
             position: relative; top: 15px; z-index: 1;
             box-shadow: 0 0 5px currentColor;
-            animation: twinkle 1.5s infinite alternate;
+            animation: twinkle 2s infinite alternate;
+            will-change: opacity, transform;
         }
-        .bulb:nth-child(odd) { animation-duration: 1.2s; }
-        .bulb:nth-child(2n) { animation-duration: 1.7s; }
+        .bulb:nth-child(odd) { animation-duration: 1.5s; }
 
         @keyframes twinkle {
-            0% { opacity: 0.4; transform: scale(0.9); }
-            100% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 15px currentColor; }
+            0% { opacity: 0.5; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1.1); }
         }
 
-        /* --- СНЕГ В ОКНАХ --- */
+        /* --- СНЕГ --- */
         @keyframes snowfall {
             from { background-position: 0 0; }
-            to { background-position: 20px 100px; }
+            to { background-position: 20px 50px; }
         }
         .snow-bg {
             background-color: #0d1b2a;
@@ -110,99 +110,80 @@
             box-shadow: inset 5px 0 20px #000;
         }
 
-        /* --- ЭФФЕКТЫ (GRAPHICS UPDATE) --- */
+        /* --- ЧИСТЫЕ ЭФФЕКТЫ (CLEAN V5) --- */
         #cam-layer { 
             position: absolute; inset: 0; pointer-events: none; z-index: 100; 
             overflow: hidden;
         }
 
-        /* 1. CRT CURVATURE & VIGNETTE */
+        /* 1. VIGNETTE (Мягкая) */
         #crt-overlay {
             position: absolute; inset: 0; 
-            box-shadow: inset 0 0 80px rgba(0,0,0,0.9), inset 0 0 20px rgba(0,0,0,1);
+            background: radial-gradient(circle, transparent 65%, rgba(0,0,0,0.4) 100%);
             z-index: 105; pointer-events: none;
-            background: radial-gradient(circle, rgba(255,255,255,0) 60%, rgba(0,0,0,0.4) 100%);
         }
 
-        /* 2. SCANLINES */
+        /* 2. SCANLINES (Тонкие и прозрачные) */
         #scanlines { 
             position: absolute; inset: 0; 
-            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.15));
-            background-size: 100% 4px; 
-            z-index: 102; pointer-events: none; opacity: 0.6; 
+            /* Используем градиент для тонких линий. Opacity 0.05 (было 0.15) */
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.05) 50%,
+                rgba(0,0,0,0.05)
+            );
+            background-size: 100% 3px; /* Размер строки 3px */
+            z-index: 102; pointer-events: none;
         }
         
-        /* 3. STATIC NOISE (ANIMATED) */
+        /* 3. STATIC NOISE (Мелкое зерно) */
         @keyframes noise-anim {
-            0% { transform: translate(0,0); } 10% { transform: translate(-5%,-5%); }
-            20% { transform: translate(-10%,5%); } 30% { transform: translate(5%,-10%); }
-            40% { transform: translate(-5%,15%); } 50% { transform: translate(-10%,5%); }
-            60% { transform: translate(15%,0); } 70% { transform: translate(0,10%); }
-            80% { transform: translate(-15%,0); } 90% { transform: translate(10%,5%); }
-            100% { transform: translate(5%,0); }
+            0% { transform: translate(0,0); } 
+            100% { transform: translate(-32px, -32px); }
         }
         #static { 
             position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-            opacity: 0.08; 
-            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.65"/></filter><rect width="100%" height="100%" filter="url(%23n)"/></svg>'); 
+            opacity: 0.04; /* Очень прозрачный (было 0.08) */
             z-index: 103; pointer-events: none; 
-            animation: noise-anim 0.5s steps(5) infinite;
+            animation: noise-anim 0.3s steps(4) infinite;
+            will-change: transform;
+            /* Убрал overlay blend mode, чтобы не мылил темные участки */
         }
         .static-active {
-            opacity: 0.9 !important;
-            filter: contrast(200%) brightness(150%);
+            opacity: 0.8 !important;
             background-color: #111;
-            mix-blend-mode: normal !important;
         }
 
-        /* 4. DIRTY LENS */
+        /* 4. DIRTY LENS (Еле заметно) */
         #dirty-lens {
-            position: absolute; inset: 0; opacity: 0.2;
-            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><filter id="f"><feTurbulence type="turbulence" baseFrequency="0.01" numOctaves="3" result="noise"/><feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.4 0"/></filter><rect width="100%" height="100%" filter="url(%23f)"/></svg>');
+            position: absolute; inset: 0; opacity: 0.06; /* Было 0.15 */
+            background-image: url('data:image/svg+xml,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="1"/></svg>');
             z-index: 104; pointer-events: none; mix-blend-mode: overlay;
         }
 
-        /* 5. RGB SHIFT / CHROMATIC ABERRATION */
-        .rgb-split {
-            text-shadow: 1px 0 red, -1px 0 blue;
-        }
+        /* 5. RGB SHIFT (Остался, он красивый) */
+        .rgb-split { text-shadow: 1px 0 rgba(255,0,0,0.5), -1px 0 rgba(0,0,255,0.5); }
 
-        /* 6. CAMERA BREATHING (DISCOMFORT) */
-        @keyframes breathe {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.005) translateY(1px); }
-            100% { transform: scale(1); }
-        }
-        .room-container.visible {
-            animation: breathe 10s ease-in-out infinite;
-        }
-        
-        /* 7. LIGHT FLICKER (Global) */
+        /* 6. LIGHT FLICKER */
         @keyframes light-flicker {
-            0% { opacity: 0; }
-            95% { opacity: 0; }
-            96% { opacity: 0.1; }
-            97% { opacity: 0; }
-            98% { opacity: 0.05; }
-            100% { opacity: 0; }
+            0% { opacity: 0; } 96% { opacity: 0; } 97% { opacity: 0.08; } 98% { opacity: 0; }
         }
         #glitch-layer { 
-            position: absolute; inset: 0; 
-            background: rgba(0,0,0,0.3); 
-            z-index: 104; pointer-events: none; 
-            mix-blend-mode: multiply;
-            animation: light-flicker 5s infinite;
+            position: absolute; inset: 0; background: rgba(0,0,0,0.3); 
+            z-index: 104; pointer-events: none; mix-blend-mode: multiply;
+            animation: light-flicker 7s infinite;
         }
 
-        /* ФИЛЬТРЫ ДЛЯ АНОМАЛИЙ */
+        /* Filters */
         .filter-blood { background: rgba(100,0,0,0.3) !important; mix-blend-mode: multiply; }
-        .filter-dark { background: rgba(0,0,0,0.92) !important; }
-        .filter-invert { filter: invert(1) hue-rotate(180deg); }
-        .filter-sepia { filter: sepia(1) contrast(1.2) brightness(0.8); }
-        .filter-blur { filter: blur(3px); }
-        .filter-noise { filter: contrast(180%) brightness(0.7); }
+        .filter-dark { background: rgba(0,0,0,0.95) !important; }
+        .filter-invert { filter: invert(1); }
+        .filter-sepia { filter: sepia(1) contrast(1.1); }
+        .filter-blur { filter: blur(2px); }
 
-        /* ИНФО */
+        /* UI Elements */
         #cam-info { 
             position: absolute; top: 40px; left: 20px; color: #ddd; font-size: 24px; z-index: 110; 
             font-weight: bold; text-shadow: 2px 2px 0px #000; letter-spacing: 2px; opacity: 0.8;
@@ -210,14 +191,13 @@
         }
         #rec-dot { position: absolute; top: 45px; right: 150px; width: 10px; height: 10px; background: #ff0000; border-radius: 50%; z-index: 110; animation: blink 2s infinite; box-shadow: 0 0 5px red; }
         #time-display { position: absolute; bottom: 20px; right: 20px; color: #ccc; font-size: 16px; z-index: 110; font-weight: bold; text-shadow: 1px 1px 0 #000; opacity: 0.7;}
-        #level-indicator { position: absolute; top: 40px; right: 20px; color: var(--text); font-size: 18px; font-weight: bold; z-index: 110; text-shadow: 0 0 5px var(--text); border: 1px solid var(--text); padding: 5px 10px; background: rgba(0,20,0,0.8); box-shadow: 0 0 10px rgba(50,255,50,0.2); }
+        #level-indicator { position: absolute; top: 40px; right: 20px; color: var(--text); font-size: 18px; font-weight: bold; z-index: 110; text-shadow: 0 0 5px var(--text); border: 1px solid var(--text); padding: 5px 10px; background: rgba(0,20,0,0.8); }
 
-        /* --- КНОПКИ --- */
         #status-display { font-size: 12px; color: #666; text-align: center; border: 1px solid #222; padding: 6px; background: #000; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
         #cam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; flex-grow: 1; overflow-y: auto; max-height: 60vh; }
         .cam-btn { background: #0a0a0a; color: #555; border: 1px solid #222; cursor: pointer; font-weight: bold; transition: 0.1s; font-size: 11px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 8px 0; min-height: 35px; }
         .cam-btn span { font-size: 9px; margin-top: 2px; color: #444; text-transform: uppercase; }
-        .cam-btn.active { color: #000; background: var(--text); border-color: var(--text); box-shadow: 0 0 10px var(--text); }
+        .cam-btn.active { color: #000; background: var(--text); border-color: var(--text); box-shadow: 0 0 8px var(--text); }
         .cam-btn.active span { color: #004400; font-weight: bold; }
         
         .action-btn { padding: 10px; font-size: 12px; font-weight: bold; cursor: pointer; border: none; text-transform: uppercase; min-height: 40px; }
@@ -244,6 +224,8 @@
             #rec-dot { top: 32px; right: 90px; width: 8px; height: 8px; }
             #garland-overlay { height: 30px; top: -5px; }
             .bulb { width: 6px; height: 9px; top: 10px; }
+            /* Hide heavy visual elements on mobile if needed */
+            #dirty-lens { opacity: 0.05; } 
         }
 
         /* --- UI OVERLAYS --- */
@@ -263,56 +245,57 @@
         .sound-btn { display: block; width: 100%; padding: 10px; background: #222; color: #fa0; border: 1px solid #530; font-size: 10px; text-transform: uppercase; cursor: pointer; }
         .close-guide { margin: 20px auto; padding: 15px 40px; background: #300; color: white; border: none; font-size: 16px; width: 100%; }
 
-        /* --- КОМНАТЫ И ПРЕДМЕТЫ (Base CSS) --- */
+        /* --- КОМНАТЫ И ПРЕДМЕТЫ (CLEAN LOOK) --- */
         .room-container { 
             width: 100%; height: 100%; position: absolute; background: #111; 
             display: none; overflow: hidden; 
-            /* Base atmosphere */
-            filter: brightness(0.9) contrast(1.1) sepia(0.1); 
-            transform-style: preserve-3d; 
+            /* Чистая картинка с легким контрастом и сепией для стиля */
+            filter: contrast(1.05) brightness(0.95) sepia(0.1);
+            transform-style: flat; 
         }
         .room-container.visible { display: block; }
 
-        /* VIGNETTE INSIDE ROOM (Corner Shadows) */
+        /* ROOM SHADOWS: Subtle */
         .room-shadow {
             position: absolute; inset: 0; pointer-events: none; z-index: 20;
-            background: radial-gradient(circle at 50% 50%, transparent 60%, rgba(0,0,0,0.8) 100%);
+            background: radial-gradient(circle at 50% 50%, transparent 65%, rgba(0,0,0,0.5) 90%, rgba(0,0,0,0.8) 100%);
         }
 
-        .wall { position: absolute; top: 0; left: 0; width: 100%; height: 75%; background: #444; z-index: 0; box-shadow: inset 0 0 150px rgba(0,0,0,0.8); }
-        .floor { position: absolute; bottom: 0; left: 0; width: 100%; height: 25%; background: #222; z-index: 1; border-top: 1px solid #111; background-image: repeating-linear-gradient(90deg, transparent, transparent 19px, #1a1a1a 20px), repeating-linear-gradient(0deg, transparent, transparent 19px, #1a1a1a 20px); background-size: 20px 20px; box-shadow: inset 0 0 50px rgba(0,0,0,0.9); }
-        .wall-grunge { background-color: #3e3e3e; background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.15'/%3E%3C/svg%3E"); }
-        /* NEW YEAR WALLPAPERS */
+        .wall { position: absolute; top: 0; left: 0; width: 100%; height: 75%; background: #444; z-index: 0; box-shadow: inset 0 0 60px rgba(0,0,0,0.6); }
+        .floor { position: absolute; bottom: 0; left: 0; width: 100%; height: 25%; background: #222; z-index: 1; border-top: 1px solid #111; background-image: repeating-linear-gradient(90deg, transparent, transparent 19px, #1a1a1a 20px), repeating-linear-gradient(0deg, transparent, transparent 19px, #1a1a1a 20px); background-size: 20px 20px; box-shadow: inset 0 0 30px rgba(0,0,0,0.8); }
+        
+        .wall-grunge { background-color: #3e3e3e; } 
         .wall-xmas-red { background: repeating-linear-gradient(45deg, #3d0000, #3d0000 10px, #2b0000 10px, #2b0000 20px); }
-        .wall-xmas-green { background: #0b2e13; box-shadow: inset 0 0 100px #000; }
+        .wall-xmas-green { background: #0b2e13; box-shadow: inset 0 0 80px #000; }
         .wall-knit { background-color: #5d4037; opacity: 0.8; background-image: radial-gradient(#795548 1px, transparent 1px); background-size: 10px 10px; }
 
-        .obj { position: absolute; box-sizing: border-box; transition: transform 1s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 10; }
+        .obj { position: absolute; box-sizing: border-box; transition: transform 0.5s ease; z-index: 10; }
         
-        .furniture, .shape-fridge, .shape-stairs, .shape-barrel-blue, .shape-workbench, .shape-cabinet, .dummy-base, .shape-bookshelf, .shape-bed, .shape-sofa, .shape-long-stand, .shape-extinguisher { box-shadow: 10px 10px 25px rgba(0,0,0,0.9); }
+        /* SHADOWS CLEAN */
+        .furniture, .shape-fridge, .shape-stairs, .shape-barrel-blue, .shape-workbench, .shape-cabinet, .dummy-base, .shape-bookshelf, .shape-bed, .shape-sofa, .shape-long-stand, .shape-extinguisher { box-shadow: 6px 6px 10px rgba(0,0,0,0.8); }
 
         /* Objects */
         .dummy-base { background: #111; border-radius: 10px 10px 5px 5px; }
         .dummy-pole { background: #222; border-left: 2px solid #000; border-right: 2px solid #000; }
         .dummy-torso { background: #dcb495; border-radius: 15px 15px 10px 10px; box-shadow: inset -5px 0 10px rgba(0,0,0,0.3); }
-        .dummy-head { background: #dcb495; border-radius: 50%; box-shadow: inset -3px -3px 5px rgba(0,0,0,0.3); }
+        .dummy-head { background: #dcb495; border-radius: 50%; box-shadow: inset -2px -2px 5px rgba(0,0,0,0.3); }
 
         .shape-fridge { background: #cfcfcf; border: 2px solid #999; border-radius: 2px; }
-        .shape-fridge::before { content:''; position: absolute; top: 30%; left: 0; width: 100%; height: 2px; background: #888; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .shape-fridge::before { content:''; position: absolute; top: 30%; left: 0; width: 100%; height: 2px; background: #888; }
         .fridge-handle-top { position: absolute; top: 15%; left: 85%; width: 4px; height: 10%; background: #aaa; border-left: 1px solid #777; border-radius: 2px; }
         .fridge-note { position: absolute; top: 10%; left: 20%; width: 15%; height: 10%; background: #ffeb3b; box-shadow: 1px 1px 2px rgba(0,0,0,0.5); transform: rotate(-5deg); }
 
         .shape-long-stand { background: #212121; border-top: 2px solid #424242; }
-        .shape-rug-large { background: #3e2723; opacity: 0.8; transform: perspective(200px) rotateX(20deg); border: 4px solid #2e1c11; }
+        .shape-rug-large { background: #3e2723; opacity: 0.8; transform: perspective(100px) rotateX(20deg); border: 4px solid #2e1c11; }
         .shape-tv-flat { background: #050505; border: 2px solid #333; }
 
         .shape-bed { background: #444; border-bottom: 5px solid #222; border-radius: 0 0 10px 10px; }
         .shape-bed::before { content:''; position:absolute; top:-10%; left:0; width:100%; height:20%; background:#2e1c11; border-radius: 15px 15px 5px 5px; } 
         .shape-pillow { background: #ccc; border-radius: 6px; box-shadow: 1px 1px 3px black; }
 
-        .window { background: #203045; border: 4px solid #111; overflow: hidden; box-shadow: 0 0 15px rgba(100,150,255,0.1); }
-        .window-frame-v { content:''; top:0; left:50%; width:4px; height:100%; background:#111; position:absolute; z-index:2; }
-        .window-frame-h { content:''; top:50%; left:0; width:100%; height:4px; background:#111; position:absolute; z-index:2; }
+        .window { background: #203045; border: 4px solid #111; overflow: hidden; box-shadow: 0 0 10px rgba(100,150,255,0.1); }
+        .window-frame-v { content:''; top:0; left:50%; width:3px; height:100%; background:#111; position:absolute; z-index:2; }
+        .window-frame-h { content:''; top:50%; left:0; width:100%; height:3px; background:#111; position:absolute; z-index:2; }
         
         .shape-clock { background: #fff; border-radius: 50%; border: 4px solid #333; }
         .shape-clock::before { content:''; position:absolute; top:50%; left:50%; width:2px; height:40%; background:black; transform: translate(-50%, -100%); }
@@ -322,7 +305,7 @@
         .shape-rubber-duck::before { content:''; position:absolute; top:-10px; left:0px; width:15px; height:15px; background: #ffeb3b; border-radius: 50%; }
         .shape-rubber-duck::after { content:''; position:absolute; top:-5px; left:-5px; width:8px; height:4px; background: orange; border-radius: 2px; }
 
-        .shape-cup { background: #fff; border-radius: 0 0 4px 4px; box-shadow: 2px 2px 5px black; }
+        .shape-cup { background: #fff; border-radius: 0 0 4px 4px; box-shadow: 2px 2px 4px black; }
         .shape-cup::before { content:''; position:absolute; top:20%; right:-4px; width:4px; height:8px; border:2px solid #fff; border-radius: 50%; }
 
         /* --- ЕЛКА --- */
@@ -331,7 +314,7 @@
             background-image: linear-gradient(#3e2723, #3e2723);
             background-size: 20% 25%; background-position: bottom center; background-repeat: no-repeat;
             position: absolute;
-            filter: drop-shadow(5px 5px 5px rgba(0,0,0,0.8));
+            filter: drop-shadow(4px 4px 4px rgba(0,0,0,0.8));
         }
         .shape-tree::before {
             content:''; position: absolute; bottom: 25%; left: 0; width: 100%; height: 75%; 
@@ -349,7 +332,7 @@
         /* --- RADIO --- */
         .shape-radio {
             background: #5d4037; border: 2px solid #3e2723; border-radius: 4px;
-            box-shadow: 2px 2px 5px black;
+            box-shadow: 3px 3px 6px black;
         }
         .shape-radio::before {
             content: ''; position: absolute; top: 15%; left: 10%; width: 40%; height: 70%;
@@ -365,9 +348,9 @@
         .shape-sofa::before { content:''; position:absolute; bottom:0; left:-10px; width:10px; height:60%; background:#4e342e; border-radius: 10px 0 0 0; }
         .shape-sofa::after { content:''; position:absolute; bottom:0; right:-10px; width:10px; height:60%; background:#4e342e; border-radius: 0 10px 0 0; }
 
-        .shape-clight-small { background: radial-gradient(circle, #fff 20%, #ddd 100%); border-radius: 50%; box-shadow: 0 0 40px rgba(255,255,255,0.4); border: 1px solid #999; z-index: 50; }
+        .shape-clight-small { background: radial-gradient(circle, #fff 20%, #ddd 100%); border-radius: 50%; box-shadow: 0 0 20px rgba(255,255,255,0.4); border: 1px solid #999; z-index: 50; }
 
-        .shape-workbench { background: #3e2723; border-top: 4px solid #5d4037; box-shadow: 5px 10px 15px black; }
+        .shape-workbench { background: #3e2723; border-top: 4px solid #5d4037; box-shadow: 5px 8px 10px black; }
         .wb-leg { position: absolute; top: 100%; width: 10%; height: 80%; background: #2e1c11; }
         .shape-toolboard { background: #222; border: 2px solid #444; box-shadow: 2px 2px 5px black; }
         .tool-hammer { background: #8d6e63; width: 4px; height: 100%; position: relative; margin: 0 auto; }
@@ -386,7 +369,7 @@
         .shape-tire-stack::before { content:''; position: absolute; top: -100%; left: 0; width: 100%; height: 100%; background: #111; border: 1px solid #333; border-radius: 3px; }
         .shape-tire-stack::after { content:''; position: absolute; top: -200%; left: 0; width: 100%; height: 100%; background: #111; border: 1px solid #333; border-radius: 3px; }
 
-        .shape-barrel-blue { background: linear-gradient(90deg, #0d47a1, #1976d2 50%, #0d47a1); border: 1px solid #002171; border-radius: 5px; box-shadow: 5px 5px 15px black; }
+        .shape-barrel-blue { background: linear-gradient(90deg, #0d47a1, #1976d2 50%, #0d47a1); border: 1px solid #002171; border-radius: 5px; box-shadow: 5px 5px 10px black; }
         .shape-barrel-blue::before { content:''; position: absolute; top: 25%; left: 0; width: 100%; height: 8%; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(0,0,0,0.5); }
         .shape-barrel-blue::after { content:''; position: absolute; top: 65%; left: 0; width: 100%; height: 8%; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(0,0,0,0.5); }
 
@@ -401,15 +384,15 @@
         .shape-jar { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 3px; }
         .shape-jar::before { content:''; position:absolute; top:5px; left:0; width:100%; height:60%; background: orange; opacity: 0.5; }
 
-        .poster { background: #ccc; color: #111; border: 1px solid #000; display: flex; align-items: center; justify-content: center; font-family: sans-serif; font-weight: bold; font-size: 10px; text-transform: uppercase; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
+        .poster { background: #ccc; color: #111; border: 1px solid #000; display: flex; align-items: center; justify-content: center; font-family: sans-serif; font-weight: bold; font-size: 10px; text-transform: uppercase; box-shadow: 1px 1px 4px rgba(0,0,0,0.5); }
         .poster-paper { background: #fdfefe; box-shadow: 0 0 2px black; transform: rotate(2deg); padding: 2px; font-size: 8px; text-align: center; }
         .poster-dark { background: #222; color: #eee; border: 1px solid #555; }
         .poster-straight { background: #ffeb3b; color: #000; border: 2px solid #000; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; box-shadow: 0 0 5px black; }
         .vent-grill { background: #222; border: 2px solid #444; background-image: repeating-linear-gradient(0deg, transparent, transparent 4px, #111 5px); }
 
-        .ghost-subtle { position: absolute; width: 40px; height: 120px; background: #000; border-radius: 50% 50% 0 0; filter: blur(15px); opacity: 0.15; pointer-events: none; z-index: 5; }
+        .ghost-subtle { position: absolute; width: 40px; height: 120px; background: #000; border-radius: 50% 50% 0 0; filter: blur(5px); opacity: 0.2; pointer-events: none; z-index: 5; }
         .shadow-corner { position: absolute; width: 100px; height: 100px; background: radial-gradient(circle at 100% 100%, transparent 20%, black 90%); opacity: 0.8; z-index: 20; pointer-events: none; }
-        .intruder-dark { width: 15px; height: 35px; background: #050505; position: absolute; top: 40%; left: 45%; box-shadow: 0 0 20px rgba(0,0,0,1); opacity: 0.9; }
+        .intruder-dark { width: 15px; height: 35px; background: #050505; position: absolute; top: 40%; left: 45%; box-shadow: 0 0 10px rgba(0,0,0,1); opacity: 0.9; }
         .scary-text { color: #800 !important; font-family: 'Times New Roman', serif !important; font-weight: bold; font-size: 9px !important; letter-spacing: 0.5px; text-shadow: 0 0 1px black; text-align: center; line-height: 1.1; padding: 2px; background: rgba(0,0,0,0.8); }
 
         /* Anomaly Assets */
@@ -868,15 +851,47 @@
             }
         };
 
+        // --- OPTIMIZED NOISE GENERATOR (HIGH RES for finer grain) ---
+        function generateNoiseTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 512; // High Res = smaller pixels
+            const ctx = canvas.getContext('2d');
+            for(let i=0; i<512*512; i++) {
+                const x = i % 512; const y = Math.floor(i / 512);
+                if(Math.random() > 0.5) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.15)'; // Low opacity white
+                    ctx.fillRect(x,y,1,1);
+                }
+            }
+            // Set as background image for static element
+            document.getElementById('static').style.backgroundImage = `url(${canvas.toDataURL()})`;
+        }
+
         // --- ИГРОВАЯ ЛОГИКА ---
-        function initGame() {
+        async function initGame() {
+            // ATTEMPT AUTO-ORIENTATION LOCK
+            try {
+                if (screen.orientation && screen.orientation.lock) {
+                    await screen.orientation.lock('landscape');
+                } else if (document.documentElement.requestFullscreen) {
+                    await document.documentElement.requestFullscreen();
+                    if (screen.orientation && screen.orientation.lock) {
+                        await screen.orientation.lock('landscape');
+                    }
+                }
+            } catch (err) {
+                console.log("Orientation lock not supported or denied.");
+            }
+
             if (document.documentElement.requestFullscreen) {
                 document.documentElement.requestFullscreen().catch(err => { console.log("Fullscreen blocked"); });
             }
+            
             document.getElementById('fullscreen-msg').style.display = 'none';
             isGameOver = false;
             AudioSys.init();
             AudioSys.startDarkAmbience(); 
+            generateNoiseTexture(); // GENERATE OPTIMIZED NOISE
             
             const mount = document.getElementById('rooms-mount');
             mount.innerHTML = '';
@@ -1023,7 +1038,7 @@
                 }
             });
             document.querySelectorAll('.room-container').forEach(r => { 
-                r.style.filter = 'brightness(0.9) contrast(1.1) sepia(0.1)'; 
+                r.style.filter = 'contrast(1.05) brightness(0.95) sepia(0.1)'; 
                 r.classList.remove('filter-blood', 'filter-dark', 'filter-invert', 'filter-sepia', 'filter-blur', 'filter-noise');
             });
             anomalyData = { active: false, type: 'none', roomId: -1, description: '', specificId: '' };
@@ -1135,7 +1150,7 @@
                 { t:'camera', desc:'Инверсия экрана', act:()=>{ roomEl.classList.add('filter-invert'); }},
                 { t:'camera', desc:'Сепия', act:()=>{ roomEl.classList.add('filter-sepia'); }},
                 { t:'camera', desc:'Размытие', act:()=>{ roomEl.classList.add('filter-blur'); }},
-                { t:'camera', desc:'Зернистость', act:()=>{ roomEl.classList.add('filter-noise'); }},
+                { t:'camera', desc:'Зернистость', act:()=>{ roomEl.style.filter='contrast(1.5)'; }},
                 { t:'camera', desc:'Пиксели', act:()=>{ roomEl.style.filter='contrast(2.0) brightness(0.7)'; }},
                 { t:'camera', desc:'Свет', act:()=>{ roomEl.style.filter='brightness(2.0)'; }},
 
@@ -1241,4 +1256,4 @@
     </script>
 </body>
 </html>
-<!-- END OF FILE ai_studio_code (Christmas_Graphics_Update).html -->
+<!-- END OF FILE ai_studio_code (Christmas_Final_Clean_v5).html -->
