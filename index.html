@@ -1,0 +1,1244 @@
+<!-- START OF FILE ai_studio_code (Christmas_Graphics_Update).html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OBSERVATION DUTY: CHRISTMAS HD</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --ui-bg: #0f0f0f;
+            --text: #33ff33;
+            --alert: #ff3333;
+            --crt-curvature: inset 0 0 100px rgba(0,0,0,0.9);
+        }
+        body { 
+            margin: 0; background: #000; height: 100vh; height: 100dvh; 
+            font-family: 'Courier New', monospace; overflow: hidden; user-select: none; display: flex; 
+        }
+
+        /* --- ЭКРАН ПОВОРОТА --- */
+        #orientation-lock {
+            position: fixed; inset: 0; background: #000; z-index: 9999;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            color: var(--alert); text-align: center; padding: 20px;
+        }
+        #orientation-lock .icon-rotate { 
+            width: 50px; height: 80px; border: 4px solid #555; border-radius: 5px; 
+            animation: rotate-anim 2s infinite ease-in-out;
+        }
+
+        /* --- JUMPSCARE LAYER --- */
+        #jumpscare-layer {
+            position: fixed; inset: 0; z-index: 99999; 
+            display: none; 
+            background: black; 
+            justify-content: center; align-items: center;
+            overflow: hidden;
+        }
+        .jump-face {
+            width: 100%; height: 100%;
+            background: 
+                radial-gradient(circle at 30% 40%, black 5%, transparent 6%),
+                radial-gradient(circle at 70% 40%, black 5%, transparent 6%),
+                radial-gradient(circle at 50% 50%, #fff 30%, #000 90%);
+            filter: contrast(5) invert(1);
+            animation: shake 0.1s infinite;
+        }
+
+        /* --- МОНИТОР --- */
+        #monitor-frame {
+            flex: 3; background: #080808; padding: 15px;
+            display: flex; flex-direction: column; position: relative;
+            box-shadow: inset 0 0 50px #000; /* Глубина корпуса */
+        }
+        #screen {
+            flex-grow: 1; background: #050505; position: relative;
+            border: 4px solid #1a1a1a; overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,1);
+            cursor: crosshair;
+            touch-action: none;
+            border-radius: 4px; /* Скругление углов экрана */
+        }
+        
+        /* --- ГИРЛЯНДА --- */
+        #garland-overlay {
+            position: absolute; top: -10px; left: 0; width: 100%; height: 40px;
+            z-index: 105; pointer-events: none;
+            display: flex; justify-content: space-around;
+            background: transparent;
+        }
+        .bulb-wire {
+            position: absolute; top: 5px; left: 0; width: 100%; height: 15px;
+            border-bottom: 2px solid #222; border-radius: 50%;
+            z-index: 0;
+        }
+        .bulb {
+            width: 8px; height: 12px; border-radius: 50%; 
+            position: relative; top: 15px; z-index: 1;
+            box-shadow: 0 0 5px currentColor;
+            animation: twinkle 1.5s infinite alternate;
+        }
+        .bulb:nth-child(odd) { animation-duration: 1.2s; }
+        .bulb:nth-child(2n) { animation-duration: 1.7s; }
+
+        @keyframes twinkle {
+            0% { opacity: 0.4; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 15px currentColor; }
+        }
+
+        /* --- СНЕГ В ОКНАХ --- */
+        @keyframes snowfall {
+            from { background-position: 0 0; }
+            to { background-position: 20px 100px; }
+        }
+        .snow-bg {
+            background-color: #0d1b2a;
+            background-image: 
+                radial-gradient(white 1px, transparent 2px),
+                radial-gradient(rgba(255,255,255,0.6) 1px, transparent 2px);
+            background-size: 20px 20px, 15px 15px;
+            animation: snowfall 5s linear infinite;
+        }
+
+        /* --- ПУЛЬТ --- */
+        #control-panel { 
+            flex: 1; background: var(--ui-bg); border-left: 2px solid #000; 
+            display: flex; flex-direction: column; padding: 10px; gap: 8px; 
+            min-width: 130px;
+            box-shadow: inset 5px 0 20px #000;
+        }
+
+        /* --- ЭФФЕКТЫ (GRAPHICS UPDATE) --- */
+        #cam-layer { 
+            position: absolute; inset: 0; pointer-events: none; z-index: 100; 
+            overflow: hidden;
+        }
+
+        /* 1. CRT CURVATURE & VIGNETTE */
+        #crt-overlay {
+            position: absolute; inset: 0; 
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.9), inset 0 0 20px rgba(0,0,0,1);
+            z-index: 105; pointer-events: none;
+            background: radial-gradient(circle, rgba(255,255,255,0) 60%, rgba(0,0,0,0.4) 100%);
+        }
+
+        /* 2. SCANLINES */
+        #scanlines { 
+            position: absolute; inset: 0; 
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.15));
+            background-size: 100% 4px; 
+            z-index: 102; pointer-events: none; opacity: 0.6; 
+        }
+        
+        /* 3. STATIC NOISE (ANIMATED) */
+        @keyframes noise-anim {
+            0% { transform: translate(0,0); } 10% { transform: translate(-5%,-5%); }
+            20% { transform: translate(-10%,5%); } 30% { transform: translate(5%,-10%); }
+            40% { transform: translate(-5%,15%); } 50% { transform: translate(-10%,5%); }
+            60% { transform: translate(15%,0); } 70% { transform: translate(0,10%); }
+            80% { transform: translate(-15%,0); } 90% { transform: translate(10%,5%); }
+            100% { transform: translate(5%,0); }
+        }
+        #static { 
+            position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            opacity: 0.08; 
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.65"/></filter><rect width="100%" height="100%" filter="url(%23n)"/></svg>'); 
+            z-index: 103; pointer-events: none; 
+            animation: noise-anim 0.5s steps(5) infinite;
+        }
+        .static-active {
+            opacity: 0.9 !important;
+            filter: contrast(200%) brightness(150%);
+            background-color: #111;
+            mix-blend-mode: normal !important;
+        }
+
+        /* 4. DIRTY LENS */
+        #dirty-lens {
+            position: absolute; inset: 0; opacity: 0.2;
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><filter id="f"><feTurbulence type="turbulence" baseFrequency="0.01" numOctaves="3" result="noise"/><feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.4 0"/></filter><rect width="100%" height="100%" filter="url(%23f)"/></svg>');
+            z-index: 104; pointer-events: none; mix-blend-mode: overlay;
+        }
+
+        /* 5. RGB SHIFT / CHROMATIC ABERRATION */
+        .rgb-split {
+            text-shadow: 1px 0 red, -1px 0 blue;
+        }
+
+        /* 6. CAMERA BREATHING (DISCOMFORT) */
+        @keyframes breathe {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.005) translateY(1px); }
+            100% { transform: scale(1); }
+        }
+        .room-container.visible {
+            animation: breathe 10s ease-in-out infinite;
+        }
+        
+        /* 7. LIGHT FLICKER (Global) */
+        @keyframes light-flicker {
+            0% { opacity: 0; }
+            95% { opacity: 0; }
+            96% { opacity: 0.1; }
+            97% { opacity: 0; }
+            98% { opacity: 0.05; }
+            100% { opacity: 0; }
+        }
+        #glitch-layer { 
+            position: absolute; inset: 0; 
+            background: rgba(0,0,0,0.3); 
+            z-index: 104; pointer-events: none; 
+            mix-blend-mode: multiply;
+            animation: light-flicker 5s infinite;
+        }
+
+        /* ФИЛЬТРЫ ДЛЯ АНОМАЛИЙ */
+        .filter-blood { background: rgba(100,0,0,0.3) !important; mix-blend-mode: multiply; }
+        .filter-dark { background: rgba(0,0,0,0.92) !important; }
+        .filter-invert { filter: invert(1) hue-rotate(180deg); }
+        .filter-sepia { filter: sepia(1) contrast(1.2) brightness(0.8); }
+        .filter-blur { filter: blur(3px); }
+        .filter-noise { filter: contrast(180%) brightness(0.7); }
+
+        /* ИНФО */
+        #cam-info { 
+            position: absolute; top: 40px; left: 20px; color: #ddd; font-size: 24px; z-index: 110; 
+            font-weight: bold; text-shadow: 2px 2px 0px #000; letter-spacing: 2px; opacity: 0.8;
+            font-family: 'Courier New', monospace;
+        }
+        #rec-dot { position: absolute; top: 45px; right: 150px; width: 10px; height: 10px; background: #ff0000; border-radius: 50%; z-index: 110; animation: blink 2s infinite; box-shadow: 0 0 5px red; }
+        #time-display { position: absolute; bottom: 20px; right: 20px; color: #ccc; font-size: 16px; z-index: 110; font-weight: bold; text-shadow: 1px 1px 0 #000; opacity: 0.7;}
+        #level-indicator { position: absolute; top: 40px; right: 20px; color: var(--text); font-size: 18px; font-weight: bold; z-index: 110; text-shadow: 0 0 5px var(--text); border: 1px solid var(--text); padding: 5px 10px; background: rgba(0,20,0,0.8); box-shadow: 0 0 10px rgba(50,255,50,0.2); }
+
+        /* --- КНОПКИ --- */
+        #status-display { font-size: 12px; color: #666; text-align: center; border: 1px solid #222; padding: 6px; background: #000; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        #cam-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; flex-grow: 1; overflow-y: auto; max-height: 60vh; }
+        .cam-btn { background: #0a0a0a; color: #555; border: 1px solid #222; cursor: pointer; font-weight: bold; transition: 0.1s; font-size: 11px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 8px 0; min-height: 35px; }
+        .cam-btn span { font-size: 9px; margin-top: 2px; color: #444; text-transform: uppercase; }
+        .cam-btn.active { color: #000; background: var(--text); border-color: var(--text); box-shadow: 0 0 10px var(--text); }
+        .cam-btn.active span { color: #004400; font-weight: bold; }
+        
+        .action-btn { padding: 10px; font-size: 12px; font-weight: bold; cursor: pointer; border: none; text-transform: uppercase; min-height: 40px; }
+        #report-btn { background: #300; color: #faa; border: 1px solid #800; } 
+        #clean-btn { background: #002200; color: #afa; border: 1px solid #060; margin-top: 5px;}
+        .btn-locked { opacity: 0.3; pointer-events: none; cursor: not-allowed; }
+        
+        #guide-btn { background: #222; color: #ccc; border: 1px solid #444; margin-top: auto; min-height: 35px; }
+
+        /* --- MEDIA QUERIES --- */
+        @media screen and (orientation: portrait) {
+            #orientation-lock { display: flex; }
+            #monitor-frame, #control-panel, #fullscreen-msg { display: none !important; }
+        }
+        @media screen and (max-width: 900px) and (orientation: landscape) {
+            #monitor-frame { flex: 4; padding: 5px; }
+            #control-panel { flex: 1; padding: 5px; gap: 4px; min-width: 90px; }
+            #cam-grid { grid-template-columns: 1fr; gap: 4px; }
+            .cam-btn { font-size: 10px; padding: 5px 0; }
+            .cam-btn span { font-size: 7px; }
+            #cam-info { font-size: 16px; top: 30px; left: 10px; }
+            #level-indicator { font-size: 14px; top: 30px; right: 10px; }
+            #time-display { font-size: 12px; bottom: 10px; right: 10px; }
+            #rec-dot { top: 32px; right: 90px; width: 8px; height: 8px; }
+            #garland-overlay { height: 30px; top: -5px; }
+            .bulb { width: 6px; height: 9px; top: 10px; }
+        }
+
+        /* --- UI OVERLAYS --- */
+        #report-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 200; display: none; flex-direction: column; justify-content: center; align-items: center; overflow-y: auto; padding: 20px 0; }
+        .rep-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 90%; max-width: 500px; }
+        .rep-type { padding: 12px; background: #111; border: 1px solid #333; color: #ccc; cursor: pointer; text-align: center; font-size: 12px; transition: 0.2s; text-transform: uppercase; }
+        .rep-type:active { background: #500; border-color: red; } 
+
+        #guide-overlay { position: absolute; inset: 0; background: #0a0a0a; z-index: 300; display: none; flex-direction: column; padding: 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .guide-title { color: var(--text); font-size: 20px; text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .guide-grid { display: grid; grid-template-columns: 1fr; gap: 15px; } 
+        @media (min-width: 900px) { .guide-grid { grid-template-columns: 1fr 1fr; } }
+        .guide-item { border: 1px solid #333; padding: 10px; background: #111; }
+        .guide-item h4 { color: #fff; margin: 0 0 5px 0; font-size: 14px; border-bottom: 1px solid #222; }
+        .guide-item p { color: #888; font-size: 11px; margin: 0; line-height: 1.3; }
+        .sound-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        .sound-btn { display: block; width: 100%; padding: 10px; background: #222; color: #fa0; border: 1px solid #530; font-size: 10px; text-transform: uppercase; cursor: pointer; }
+        .close-guide { margin: 20px auto; padding: 15px 40px; background: #300; color: white; border: none; font-size: 16px; width: 100%; }
+
+        /* --- КОМНАТЫ И ПРЕДМЕТЫ (Base CSS) --- */
+        .room-container { 
+            width: 100%; height: 100%; position: absolute; background: #111; 
+            display: none; overflow: hidden; 
+            /* Base atmosphere */
+            filter: brightness(0.9) contrast(1.1) sepia(0.1); 
+            transform-style: preserve-3d; 
+        }
+        .room-container.visible { display: block; }
+
+        /* VIGNETTE INSIDE ROOM (Corner Shadows) */
+        .room-shadow {
+            position: absolute; inset: 0; pointer-events: none; z-index: 20;
+            background: radial-gradient(circle at 50% 50%, transparent 60%, rgba(0,0,0,0.8) 100%);
+        }
+
+        .wall { position: absolute; top: 0; left: 0; width: 100%; height: 75%; background: #444; z-index: 0; box-shadow: inset 0 0 150px rgba(0,0,0,0.8); }
+        .floor { position: absolute; bottom: 0; left: 0; width: 100%; height: 25%; background: #222; z-index: 1; border-top: 1px solid #111; background-image: repeating-linear-gradient(90deg, transparent, transparent 19px, #1a1a1a 20px), repeating-linear-gradient(0deg, transparent, transparent 19px, #1a1a1a 20px); background-size: 20px 20px; box-shadow: inset 0 0 50px rgba(0,0,0,0.9); }
+        .wall-grunge { background-color: #3e3e3e; background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.15'/%3E%3C/svg%3E"); }
+        /* NEW YEAR WALLPAPERS */
+        .wall-xmas-red { background: repeating-linear-gradient(45deg, #3d0000, #3d0000 10px, #2b0000 10px, #2b0000 20px); }
+        .wall-xmas-green { background: #0b2e13; box-shadow: inset 0 0 100px #000; }
+        .wall-knit { background-color: #5d4037; opacity: 0.8; background-image: radial-gradient(#795548 1px, transparent 1px); background-size: 10px 10px; }
+
+        .obj { position: absolute; box-sizing: border-box; transition: transform 1s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 10; }
+        
+        .furniture, .shape-fridge, .shape-stairs, .shape-barrel-blue, .shape-workbench, .shape-cabinet, .dummy-base, .shape-bookshelf, .shape-bed, .shape-sofa, .shape-long-stand, .shape-extinguisher { box-shadow: 10px 10px 25px rgba(0,0,0,0.9); }
+
+        /* Objects */
+        .dummy-base { background: #111; border-radius: 10px 10px 5px 5px; }
+        .dummy-pole { background: #222; border-left: 2px solid #000; border-right: 2px solid #000; }
+        .dummy-torso { background: #dcb495; border-radius: 15px 15px 10px 10px; box-shadow: inset -5px 0 10px rgba(0,0,0,0.3); }
+        .dummy-head { background: #dcb495; border-radius: 50%; box-shadow: inset -3px -3px 5px rgba(0,0,0,0.3); }
+
+        .shape-fridge { background: #cfcfcf; border: 2px solid #999; border-radius: 2px; }
+        .shape-fridge::before { content:''; position: absolute; top: 30%; left: 0; width: 100%; height: 2px; background: #888; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .fridge-handle-top { position: absolute; top: 15%; left: 85%; width: 4px; height: 10%; background: #aaa; border-left: 1px solid #777; border-radius: 2px; }
+        .fridge-note { position: absolute; top: 10%; left: 20%; width: 15%; height: 10%; background: #ffeb3b; box-shadow: 1px 1px 2px rgba(0,0,0,0.5); transform: rotate(-5deg); }
+
+        .shape-long-stand { background: #212121; border-top: 2px solid #424242; }
+        .shape-rug-large { background: #3e2723; opacity: 0.8; transform: perspective(200px) rotateX(20deg); border: 4px solid #2e1c11; }
+        .shape-tv-flat { background: #050505; border: 2px solid #333; }
+
+        .shape-bed { background: #444; border-bottom: 5px solid #222; border-radius: 0 0 10px 10px; }
+        .shape-bed::before { content:''; position:absolute; top:-10%; left:0; width:100%; height:20%; background:#2e1c11; border-radius: 15px 15px 5px 5px; } 
+        .shape-pillow { background: #ccc; border-radius: 6px; box-shadow: 1px 1px 3px black; }
+
+        .window { background: #203045; border: 4px solid #111; overflow: hidden; box-shadow: 0 0 15px rgba(100,150,255,0.1); }
+        .window-frame-v { content:''; top:0; left:50%; width:4px; height:100%; background:#111; position:absolute; z-index:2; }
+        .window-frame-h { content:''; top:50%; left:0; width:100%; height:4px; background:#111; position:absolute; z-index:2; }
+        
+        .shape-clock { background: #fff; border-radius: 50%; border: 4px solid #333; }
+        .shape-clock::before { content:''; position:absolute; top:50%; left:50%; width:2px; height:40%; background:black; transform: translate(-50%, -100%); }
+        .shape-clock::after { content:''; position:absolute; top:50%; left:50%; width:2px; height:25%; background:black; transform: translate(-50%, -100%) rotate(90deg); }
+
+        .shape-rubber-duck { background: #ffeb3b; border-radius: 0 0 10px 10px; }
+        .shape-rubber-duck::before { content:''; position:absolute; top:-10px; left:0px; width:15px; height:15px; background: #ffeb3b; border-radius: 50%; }
+        .shape-rubber-duck::after { content:''; position:absolute; top:-5px; left:-5px; width:8px; height:4px; background: orange; border-radius: 2px; }
+
+        .shape-cup { background: #fff; border-radius: 0 0 4px 4px; box-shadow: 2px 2px 5px black; }
+        .shape-cup::before { content:''; position:absolute; top:20%; right:-4px; width:4px; height:8px; border:2px solid #fff; border-radius: 50%; }
+
+        /* --- ЕЛКА --- */
+        .shape-tree {
+            border: none; background: transparent;
+            background-image: linear-gradient(#3e2723, #3e2723);
+            background-size: 20% 25%; background-position: bottom center; background-repeat: no-repeat;
+            position: absolute;
+            filter: drop-shadow(5px 5px 5px rgba(0,0,0,0.8));
+        }
+        .shape-tree::before {
+            content:''; position: absolute; bottom: 25%; left: 0; width: 100%; height: 75%; 
+            background: #0f3d0f; clip-path: polygon(50% 0, 0% 100%, 100% 100%); z-index: 1;
+        }
+        .shape-tree::after {
+            content:''; position: absolute; top: -5px; left: 50%; transform: translateX(-50%); 
+            width: 8px; height: 8px; background: gold; border-radius: 50%; box-shadow: 0 0 5px gold; z-index: 2;
+        }
+        .tree-decor { 
+            position: absolute; width: 4px; height: 4px; background: red; border-radius: 50%; box-shadow: 0 0 2px red; 
+            aspect-ratio: 1 / 1; height: auto !important;
+        }
+
+        /* --- RADIO --- */
+        .shape-radio {
+            background: #5d4037; border: 2px solid #3e2723; border-radius: 4px;
+            box-shadow: 2px 2px 5px black;
+        }
+        .shape-radio::before {
+            content: ''; position: absolute; top: 15%; left: 10%; width: 40%; height: 70%;
+            background: #333; border-radius: 50%; border: 1px solid #111;
+            background-image: radial-gradient(#222 1px, transparent 1px); background-size: 2px 2px;
+        }
+        .shape-radio::after {
+            content: ''; position: absolute; top: 20%; right: 15%; width: 25%; height: 20%;
+            background: #bcaaa4; border: 1px solid #5d4037;
+        }
+
+        .shape-sofa { background: #3e2723; border-radius: 10px 10px 5px 5px; border-bottom: 5px solid #222; }
+        .shape-sofa::before { content:''; position:absolute; bottom:0; left:-10px; width:10px; height:60%; background:#4e342e; border-radius: 10px 0 0 0; }
+        .shape-sofa::after { content:''; position:absolute; bottom:0; right:-10px; width:10px; height:60%; background:#4e342e; border-radius: 0 10px 0 0; }
+
+        .shape-clight-small { background: radial-gradient(circle, #fff 20%, #ddd 100%); border-radius: 50%; box-shadow: 0 0 40px rgba(255,255,255,0.4); border: 1px solid #999; z-index: 50; }
+
+        .shape-workbench { background: #3e2723; border-top: 4px solid #5d4037; box-shadow: 5px 10px 15px black; }
+        .wb-leg { position: absolute; top: 100%; width: 10%; height: 80%; background: #2e1c11; }
+        .shape-toolboard { background: #222; border: 2px solid #444; box-shadow: 2px 2px 5px black; }
+        .tool-hammer { background: #8d6e63; width: 4px; height: 100%; position: relative; margin: 0 auto; }
+        .tool-hammer::before { content:''; position:absolute; top:0; left:-6px; width:16px; height:8px; background: #777; border-radius: 2px; }
+        .tool-wrench { background: #888; width: 4px; height: 100%; position: relative; margin: 0 auto; border-radius: 2px; }
+        .tool-wrench::before { content:''; position:absolute; top:0; left:-3px; width:10px; height:6px; border: 2px solid #888; border-top: none; border-radius: 0 0 5px 5px; }
+
+        .toilet-tank { position: absolute; top: 0; left: 0; width: 100%; height: 45%; background: #eee; border: 1px solid #ccc; border-radius: 2px; }
+        .toilet-bowl { position: absolute; bottom: 0; right: 0; width: 120%; height: 55%; background: #eee; border: 1px solid #ccc; border-radius: 0 0 15px 25px; transform: skewX(-10deg); }
+
+        .shape-cabinet { background: #b71c1c; border: 2px solid #7f0000; display: flex; flex-direction: column; gap: 2px; padding: 2px; }
+        .cabinet-drawer { background: #c62828; width: 100%; height: 18%; border: 1px solid #800; position: relative; }
+        .cabinet-drawer::after { content:''; position: absolute; top: 50%; left: 50%; width: 30%; height: 2px; background: silver; transform: translate(-50%, -50%); }
+
+        .shape-tire-stack { background: #111; border-radius: 3px; border: 1px solid #333; }
+        .shape-tire-stack::before { content:''; position: absolute; top: -100%; left: 0; width: 100%; height: 100%; background: #111; border: 1px solid #333; border-radius: 3px; }
+        .shape-tire-stack::after { content:''; position: absolute; top: -200%; left: 0; width: 100%; height: 100%; background: #111; border: 1px solid #333; border-radius: 3px; }
+
+        .shape-barrel-blue { background: linear-gradient(90deg, #0d47a1, #1976d2 50%, #0d47a1); border: 1px solid #002171; border-radius: 5px; box-shadow: 5px 5px 15px black; }
+        .shape-barrel-blue::before { content:''; position: absolute; top: 25%; left: 0; width: 100%; height: 8%; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(0,0,0,0.5); }
+        .shape-barrel-blue::after { content:''; position: absolute; top: 65%; left: 0; width: 100%; height: 8%; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(0,0,0,0.5); }
+
+        .shape-extinguisher { background: #b71c1c; border-radius: 5px 5px 2px 2px; }
+        .shape-extinguisher::before { content:''; position: absolute; top: -5px; left: 30%; width: 40%; height: 5px; background: #333; }
+        .shape-extinguisher::after { content:''; position: absolute; top: -5px; left: 80%; width: 10px; height: 30px; background: #111; border-radius: 2px; transform: rotate(-10deg); }
+
+        .shape-box { background: #8d6e63; border: 1px solid #5d4037; }
+        .shape-box::before { content:''; position: absolute; top: 0; left: 0; width: 50%; height: 100%; border-right: 1px solid #5d4037; }
+
+        .shape-rack-shelf { background: #5d4037; border-bottom: 3px solid #3e2723; }
+        .shape-jar { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 3px; }
+        .shape-jar::before { content:''; position:absolute; top:5px; left:0; width:100%; height:60%; background: orange; opacity: 0.5; }
+
+        .poster { background: #ccc; color: #111; border: 1px solid #000; display: flex; align-items: center; justify-content: center; font-family: sans-serif; font-weight: bold; font-size: 10px; text-transform: uppercase; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
+        .poster-paper { background: #fdfefe; box-shadow: 0 0 2px black; transform: rotate(2deg); padding: 2px; font-size: 8px; text-align: center; }
+        .poster-dark { background: #222; color: #eee; border: 1px solid #555; }
+        .poster-straight { background: #ffeb3b; color: #000; border: 2px solid #000; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; box-shadow: 0 0 5px black; }
+        .vent-grill { background: #222; border: 2px solid #444; background-image: repeating-linear-gradient(0deg, transparent, transparent 4px, #111 5px); }
+
+        .ghost-subtle { position: absolute; width: 40px; height: 120px; background: #000; border-radius: 50% 50% 0 0; filter: blur(15px); opacity: 0.15; pointer-events: none; z-index: 5; }
+        .shadow-corner { position: absolute; width: 100px; height: 100px; background: radial-gradient(circle at 100% 100%, transparent 20%, black 90%); opacity: 0.8; z-index: 20; pointer-events: none; }
+        .intruder-dark { width: 15px; height: 35px; background: #050505; position: absolute; top: 40%; left: 45%; box-shadow: 0 0 20px rgba(0,0,0,1); opacity: 0.9; }
+        .scary-text { color: #800 !important; font-family: 'Times New Roman', serif !important; font-weight: bold; font-size: 9px !important; letter-spacing: 0.5px; text-shadow: 0 0 1px black; text-align: center; line-height: 1.1; padding: 2px; background: rgba(0,0,0,0.8); }
+
+        /* Anomaly Assets */
+        .blood-stain { position: absolute; width: 40px; height: 30px; z-index: 5; opacity: 0.8; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30,30 Q50,10 70,30 T90,60 Q70,90 50,70 T10,50 Q20,30 30,30' fill='%23600'/%3E%3C/svg%3E"); background-size: contain; background-repeat: no-repeat; }
+        .abyss-hole { position: absolute; width: 50px; height: 50px; background: #000; border-radius: 50%; box-shadow: inset 0 0 20px #000, 0 0 10px #000; z-index: 4; }
+        .glowing-eyes { position: absolute; width: 10px; height: 4px; display: flex; gap: 4px; z-index: 8; }
+        .glowing-eyes::before, .glowing-eyes::after { content:''; width: 3px; height: 3px; background: #fff; border-radius: 50%; box-shadow: 0 0 2px #fff; }
+        .slime-blob { position: absolute; width: 30px; height: 30px; z-index: 5; opacity: 0.8; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20,80 Q50,20 80,80 Q50,100 20,80' fill='%232f2'/%3E%3C/svg%3E"); }
+        .crack-wall { position: absolute; width: 40px; height: 40px; z-index: 2; opacity: 0.7; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50,10 L45,40 L60,50 L40,80 L50,90' stroke='black' stroke-width='2' fill='none'/%3E%3C/svg%3E"); }
+        .creepy-doll { position: absolute; width: 15px; height: 25px; background: #333; border-radius: 5px; z-index: 6; box-shadow: 0 0 5px black; }
+        .creepy-doll::before { content:''; position:absolute; top:0; left:2px; width:11px; height:10px; background:#ccc; border-radius:50%; }
+
+        @keyframes rotate-anim { 0% { transform: rotate(0deg); } 25% { transform: rotate(90deg); } 50% { transform: rotate(90deg); } 100% { transform: rotate(0deg); } }
+        @keyframes blink { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        
+        /* JUMPSCARE ANIMATION */
+        @keyframes shake { 0% { transform: translate(0,0); } 25% { transform: translate(10px, 10px); } 50% { transform: translate(-10px, -10px); } 75% { transform: translate(-10px, 10px); } }
+
+        /* UI Overlays */
+        #fullscreen-msg { position: fixed; inset: 0; background: black; z-index: 500; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 16px; text-align: center; border: 10px solid #111; padding: 20px; overflow-y: auto; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+
+    <!-- JUMPSCARE LAYER -->
+    <div id="jumpscare-layer" style="display:none;">
+        <div class="jump-face"></div>
+    </div>
+
+    <div id="orientation-lock">
+        <div class="icon-rotate"></div>
+        <h2>ПОВЕРНИТЕ УСТРОЙСТВО</h2>
+        <p>ИГРА РАБОТАЕТ ТОЛЬКО В ГОРИЗОНТАЛЬНОМ РЕЖИМЕ</p>
+    </div>
+
+    <!-- СПРАВОЧНИК -->
+    <div id="guide-overlay">
+        <div class="guide-title">СПРАВОЧНИК</div>
+        <div class="guide-grid">
+            <div class="guide-item">
+                <h4>ПРИЗРАК</h4>
+                <p>Тень в углу, Белое лицо, Глаза во тьме, Бездна в стене, Левитирующий шар, Черная дымка, Прозрачная фигура.</p>
+            </div>
+            <div class="guide-item">
+                <h4>ПЕРЕМЕЩЕНИЕ</h4>
+                <p>Предмет на потолке, Перевернут (180°), Сдвиг в сторону, Сдвиг вверх, Наклон (45°), Отражение (зеркально).</p>
+            </div>
+            <div class="guide-item">
+                <h4>ЛИШНИЙ ПРЕДМЕТ</h4>
+                <p>Коробка, Пятно крови, Черный куб, Насекомое, Странная тень, Зеленая слизь, Трещина на стене, Кукла, Нож.</p>
+            </div>
+            <div class="guide-item">
+                <h4>ИСЧЕЗНОВЕНИЕ</h4>
+                <p>Полная пропажа любого предмета из комнаты.</p>
+            </div>
+            <div class="guide-item">
+                <h4>ИСКАЖЕНИЕ</h4>
+                <p>Потемнение, Осветление (ярко), Увеличение, Уменьшение, Растяжение (ширина/высота), Инверсия цвета предмета.</p>
+            </div>
+            <div class="guide-item">
+                <h4>НАДПИСЬ</h4>
+                <p>RUN, DIE, HELP, NO, 666, BEHIND, YOU, KILL, LOST, OBEY, VOID, HIDE, LIES.</p>
+            </div>
+            <div class="guide-item">
+                <h4>СБОЙ КАМЕРЫ</h4>
+                <p>Красный фильтр (кровь), Полная темнота, Инверсия экрана, Сепия, Размытие (блюр), Зернистость, Пикселизация, Яркий свет.</p>
+            </div>
+            <div class="guide-item">
+                <h4>ВТОРЖЕНИЕ</h4>
+                <p>Человек в проеме, Рука из стены, Открытая дверь, Лицо в камеру (скример), Высокая фигура.</p>
+            </div>
+            <div class="guide-item" style="border-color: #740; grid-column: 1 / -1;">
+                <h4 style="color: #c84;">АУДИО</h4>
+                <div class="sound-grid">
+                    <button class="sound-btn" onclick="AudioSys.playScarySound('breathing')">🔊 ДЫХАНИЕ</button>
+                    <button class="sound-btn" onclick="AudioSys.playScarySound('thud')">🔊 СТУК</button>
+                    <button class="sound-btn" onclick="AudioSys.playScarySound('whine')">🔊 ПИСК</button>
+                    <button class="sound-btn" onclick="AudioSys.playScarySound('whisper')">🔊 ШЕПОТ</button>
+                    <button class="sound-btn" onclick="AudioSys.playScarySound('steps')">🔊 ШАГИ</button>
+                    <button class="sound-btn" onclick="AudioSys.playScarySound('laugh')">🔊 СМЕХ</button>
+                </div>
+            </div>
+        </div>
+        <button class="close-guide" onclick="toggleGuide()">ЗАКРЫТЬ</button>
+    </div>
+
+    <div id="fullscreen-msg">
+        <h1 style="color:#a22; font-size: 24px; letter-spacing: 3px; margin-bottom: 20px;">🎄 НОВОГОДНЯЯ СМЕНА 🎄</h1>
+        <div style="color:#888; line-height: 1.4; font-size: 14px;">
+            <p>ЗАДАЧА: Найти 20 аномалий.</p>
+            <p>ВНИМАНИЕ: Звук ВКЛЮЧЕН (ЕСТЬ СКРИМЕРЫ).</p>
+        </div>
+        <button onclick="toggleGuide()" style="margin-top: 15px; padding: 10px 20px; background: #111; border: 1px solid #333; color: #888;">СПРАВОЧНИК</button>
+        <button onclick="initGame()" style="margin-top: 15px; padding: 15px 40px; background: #030; border: 1px solid #060; color: #afa; font-weight: bold;">НАЧАТЬ</button>
+    </div>
+
+    <div id="monitor-frame">
+        <div id="screen">
+            <!-- ГИРЛЯНДА OVERLAY -->
+            <div id="garland-overlay">
+                <div class="bulb-wire"></div>
+                <div class="bulb" style="background:red; color:red"></div>
+                <div class="bulb" style="background:lime; color:lime"></div>
+                <div class="bulb" style="background:gold; color:gold"></div>
+                <div class="bulb" style="background:cyan; color:cyan"></div>
+                <div class="bulb" style="background:red; color:red"></div>
+                <div class="bulb" style="background:lime; color:lime"></div>
+                <div class="bulb" style="background:magenta; color:magenta"></div>
+                <div class="bulb" style="background:orange; color:orange"></div>
+                <div class="bulb" style="background:cyan; color:cyan"></div>
+            </div>
+
+            <div id="cam-layer">
+                <div id="crt-overlay"></div>
+                <div id="scanlines"></div>
+                <div id="dirty-lens"></div>
+                <div id="static"></div>
+                <div id="glitch-layer"></div>
+            </div>
+            <div id="rec-dot"></div>
+            <div id="cam-info" class="rgb-split">КАМ 01</div>
+            <div id="level-indicator">LVL 0/20</div>
+            <div id="time-display">00:00:00</div>
+            <div id="rooms-mount"></div>
+
+            <div id="report-overlay">
+                <h3 style="color:red; margin-bottom:15px; background:black; padding:5px; border: 1px solid red; font-size: 16px;">УГРОЗА</h3>
+                <div class="rep-group">
+                    <div class="rep-type" onclick="checkAnswer('ghost')">ПРИЗРАК</div>
+                    <div class="rep-type" onclick="checkAnswer('move')">ПЕРЕМЕЩЕНИЕ</div>
+                    <div class="rep-type" onclick="checkAnswer('extra')">ЛИШНИЙ</div>
+                    <div class="rep-type" onclick="checkAnswer('missing')">ПРОПАЖА</div>
+                    <div class="rep-type" onclick="checkAnswer('morph')">ИСКАЖЕНИЕ</div>
+                    <div class="rep-type" onclick="checkAnswer('text')">НАДПИСЬ</div>
+                    <div class="rep-type" onclick="checkAnswer('camera')">СБОЙ</div>
+                    <div class="rep-type" onclick="checkAnswer('intruder')">ВТОРЖЕНИЕ</div>
+                    <div class="rep-type" onclick="checkAnswer('sound')" style="grid-column: span 2; color: #fa0; border-color: #fa0;">ЗВУК</div>
+                </div>
+                <!-- Кнопка ОТМЕНА с отступом снизу -->
+                <button style="margin-top:15px; margin-bottom: 20px; padding:10px 20px; background:#222; color:#aaa; border:none;" onclick="toggleReport()">ОТМЕНА</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="control-panel">
+        <div id="status-display">...</div>
+        <div id="cam-grid">
+            <button class="cam-btn active" onclick="switchCam(0)">01<span>СПАЛЬНЯ</span></button>
+            <button class="cam-btn" onclick="switchCam(1)">02<span>КУХНЯ</span></button>
+            <button class="cam-btn" onclick="switchCam(2)">03<span>ЗАЛ</span></button>
+            <button class="cam-btn" onclick="switchCam(3)">04<span>ВАННАЯ</span></button>
+            <button class="cam-btn" onclick="switchCam(4)">05<span>КОРИДОР</span></button>
+            <button class="cam-btn" onclick="switchCam(5)">06<span>ПОДВАЛ</span></button>
+            <button class="cam-btn" onclick="switchCam(6)">07<span>ГАРАЖ</span></button>
+            <button class="cam-btn" onclick="switchCam(7)">08<span>СКЛАД</span></button>
+        </div>
+        <button class="action-btn" id="clean-btn" onclick="checkAnswer('none')">ЧИСТО</button>
+        <button class="action-btn" id="report-btn" onclick="toggleReport()">РЕПОРТ</button>
+        <button class="action-btn" id="guide-btn" onclick="toggleGuide()">?</button>
+    </div>
+
+    <script>
+        const MAX_LEVEL = 20;
+        
+        // --- DETAILED ROOM LAYOUTS (CHRISTMAS EDITION) ---
+        const ROOM_LAYOUTS = [
+            {
+                name: "СПАЛЬНЯ", wall: "#0b2e13", // Зеленая стена
+                items: [
+                    { id: 'bed', shape: 'shape-bed', w:40, h:20, x:10, y:65, z:5 },
+                    { id: 'pillow', shape: 'shape-pillow', w:12, h:7, x:13, y:62, z:6 },
+                    { id: 'win', type: 'window', className:'snow-bg', w:20, h:30, x:45, y:15, z:1 },
+                    { id: 'win-v', className:'window-frame-v', childOf:'win' }, { id: 'win-h', className:'window-frame-h', childOf:'win' },
+                    { id: 'poster', type: 'poster', text:'СОН', w:10, h:12, x:75, y:20, z:2 },
+                    { id: 'dummy', w:10, h:35, x:20, y:50, z:6 },
+                    { id: 'd-base', className:'dummy-base', childOf:'dummy', w:100, h:30, x:0, y:70, z:6 },
+                    { id: 'd-pole', className:'dummy-pole', childOf:'dummy', w:15, h:30, x:42, y:40, z:5 },
+                    { id: 'd-torso', className:'dummy-torso', childOf:'dummy', w:60, h:40, x:20, y:15, z:6 },
+                    { id: 'd-head', className:'dummy-head', childOf:'dummy', w:30, h:15, x:35, y:0, z:6 },
+                    { id: 'clock', shape: 'shape-clock', w:6, h:8, x:85, y:15, z:5 },
+                    { id: 'rug', bg:'#222', w:25, h:10, x:55, y:75, z:2, style:'border-radius:50%; transform:scaleY(0.5); opacity:0.5;' },
+                    { id: 'cal', type: 'poster-paper', text:'01.01', w:5, h:6, x:10, y:25, z:2 }
+                ]
+            },
+            {
+                name: "КУХНЯ", wall: "wall-xmas-red", // Красные обои
+                items: [
+                    { id: 'fridge', shape: 'shape-fridge', w:20, h:55, x:5, y:20, z:4 },
+                    { id: 'fh1', className: 'fridge-handle-top', childOf: 'fridge' },
+                    { id: 'fnote', className: 'fridge-note', childOf: 'fridge' },
+                    { id: 'table', type: 'furniture', bg:'#3e2723', w:30, h:20, x:35, y:60, z:5 },
+                    { id: 'win2', type: 'window', className:'snow-bg', w:25, h:20, x:40, y:10, z:1 },
+                    { id: 'win2-v', className:'window-frame-v', childOf:'win2' }, { id: 'win2-h', className:'window-frame-h', childOf:'win2' },
+                    { id: 'cup', shape: 'shape-cup', w:4, h:6, x:45, y:54, z:6 }, 
+                    { id: 'poster2', type: 'poster', text:'ЕДА', w:10, h:10, x:80, y:20, z:2 },
+                    
+                    /* FIXED TREE POSITION (LOWERED) */
+                    { id: 'tree', shape: 'shape-tree', w:8, h:12, x:85, y:68, z:5 },
+                    { id: 'tdec1', className: 'tree-decor', childOf:'tree', w:30, h:25, x:20, y:60, z:6 },
+                    { id: 'tdec2', className: 'tree-decor', childOf:'tree', w:30, h:25, x:60, y:40, z:6, style:'background:cyan;' }
+                ]
+            },
+            {
+                name: "ЗАЛ", wall: "wall-knit", // Вязаные обои
+                items: [
+                    { id: 'winL', type: 'window', className:'snow-bg', w:20, h:30, x:10, y:10, z:1 },
+                    { id: 'winL-v', className:'window-frame-v', childOf:'winL' }, { id: 'winL-h', className:'window-frame-h', childOf:'winL' },
+                    { id: 'tvstand', shape: 'shape-long-stand', w:40, h:10, x:55, y:60, z:5 },
+                    { id: 'tv', shape: 'shape-tv-flat', w:30, h:20, x:60, y:40, z:5 },
+                    { id: 'sofa', shape: 'shape-sofa', w:40, h:15, x:5, y:65, z:5 },
+                    { id: 'rug', className: 'shape-rug-large', w:40, h:15, x:30, y:75, z:2 },
+                    { id: 'paint', type: 'poster-dark', text:'', w:15, h:25, x:40, y:15, z:1 },
+                    
+                    /* FIXED TREE POSITION (LOWERED) */
+                    { id: 'treeBig', shape: 'shape-tree', w:12, h:18, x:90, y:67, z:6, style:'transform: scale(1.5);' },
+                    { id: 'tdecB1', className: 'tree-decor', childOf:'treeBig', w:25, h:20, x:50, y:50, z:7, style:'background:orange' },
+                    { id: 'flyer', type: 'poster-paper', text:'INFO', w:4, h:5, x:32, y:40, z:1 }
+                ]
+            },
+            {
+                name: "ВАННАЯ", wall: "#2c3e50", 
+                items: [
+                    { id: 'mirror', bg:'#556', w:15, h:20, x:42, y:15, z:2, style:'border:2px solid #333' },
+                    { id: 'bath', type: 'furniture', bg:'#ddd', w:40, h:25, x:5, y:55, z:4 },
+                    { id: 'duck', shape: 'shape-rubber-duck', w:6, h:4, x:30, y:52, z:6 },
+                    { id: 'toilet', shape: 'shape-toilet-new', w:12, h:25, x:80, y:55, z:4 },
+                    { id: 'ttank', className: 'toilet-tank', childOf: 'toilet' },
+                    { id: 'tbowl', className: 'toilet-bowl', childOf: 'toilet' },
+                    { id: 'sign', type: 'poster', text:'ВОДА', w:8, h:4, x:60, y:20, z:2 },
+                    { id: 'shampoo', bg:'#c2185b', w:3, h:5, x:10, y:50, z:5, style:'border-radius:2px;' }
+                ]
+            },
+            {
+                name: "КОРИДОР", wall: "#3e2723",
+                items: [
+                    { id: 'door', bg:'#1a100a', w:18, h:60, x:41, y:15, z:1, style:'border:2px solid black' },
+                    { id: 'exit', type: 'poster', text:'ВЫХОД', bg:'#003300', w:12, h:4, x:44, y:8, z:2, style:'color:#5f5; font-size:10px;' },
+                    { id: 'rug', shape: 'shape-rug', w:25, h:10, x:38, y:72, z:2 },
+                    { id: 'rack', shape: 'shape-rack', w:4, h:50, x:75, y:25, z:5 },
+                    { id: 'clight', shape: 'shape-clight-small', w:4, h:4, x:48, y:2, z:5 },
+                    { id: 'notice', type: 'poster-paper', text:'ТИШИНА', w:8, h:6, x:20, y:30, z:1 },
+                    /* FIXED EXTINGUISHER POSITION (LOWERED) */
+                    { id: 'extinguisher', shape: 'shape-extinguisher', w:4, h:12, x:65, y:66, z:5 },
+                    { id: 'box_c', shape: 'shape-box', w:10, h:10, x:10, y:65, z:4 },
+                    { id: 'vent', className: 'vent-grill', w:10, h:5, x:10, y:10, z:1 }
+                ]
+            },
+            {
+                name: "ПОДВАЛ", wall: "grunge",
+                items: [
+                    { id: 'pipe1', bg:'#444', w:100, h:4, x:0, y:10, z:3, style:'border-bottom:1px solid #111;' },
+                    { id: 'pipe2', bg:'#333', w:5, h:60, x:15, y:10, z:1 },
+                    { id: 'bench', shape: 'shape-workbench', w:35, h:5, x:50, y:60, z:5 },
+                    { id: 'leg1_real', bg:'#222', w:3, h:15, x:52, y:65, z:4 },
+                    { id: 'leg2_real', bg:'#222', w:3, h:15, x:80, y:65, z:4 },
+                    { id: 'tools', shape: 'shape-toolboard', w:25, h:15, x:55, y:35, z:2 },
+                    { id: 'hammer', className: 'tool-hammer', w:5, h:10, x:58, y:38, z:3, style:'transform: rotate(15deg);' },
+                    { id: 'wrench', className: 'tool-wrench', w:4, h:8, x:65, y:39, z:3 },
+                    { id: 'sign3', className: 'poster-straight', text:'ОПАСНО', w:12, h:6, x:10, y:30, z:2 },
+                    /* RADIO ADDED */
+                    { id: 'radio', className: 'shape-radio', w:6, h:4, x:75, y:56, z:6 }
+                ]
+            },
+            {
+                name: "ГАРАЖ", wall: "#222",
+                items: [
+                    { id: 'cabinet', shape: 'shape-cabinet', w:15, h:30, x:10, y:45, z:4 },
+                    { id: 'd1', className: 'cabinet-drawer', childOf: 'cabinet' },
+                    { id: 'd2', className: 'cabinet-drawer', childOf: 'cabinet' },
+                    { id: 'd3', className: 'cabinet-drawer', childOf: 'cabinet' },
+                    { id: 'tires', shape: 'shape-tire-stack', w:12, h:10, x:80, y:65, z:4 },
+                    { id: 'tires2', shape: 'shape-tire-stack', w:12, h:10, x:80, y:55, z:4 },
+                    { id: 'barrel', shape: 'shape-barrel-blue', w:10, h:15, x:65, y:60, z:4 },
+                    { id: 'boxg1', bg:'#4e342e', w:10, h:10, x:30, y:65, z:3, style:'border:1px solid #3e2723;' },
+                    { id: 'boxg2', bg:'#3e2723', w:8, h:8, x:38, y:67, z:4, style:'border:1px solid #2e1c11;' },
+                    { id: 'poster_g', type: 'poster', text:'ГАРАЖ', bg:'#111', color:'#ccc', w:15, h:8, x:40, y:20, z:2 },
+                    { id: 'fix', type: 'poster-paper', text:'РЕМОНТ', w:8, h:5, x:60, y:30, z:1 }
+                ]
+            },
+            {
+                name: "КЛАДОВАЯ", wall: "#6d4c41",
+                items: [
+                    { id: 'shelf1', shape: 'shape-rack-shelf', w:80, h:5, x:10, y:20, z:2 },
+                    { id: 'shelf2', shape: 'shape-rack-shelf', w:80, h:5, x:10, y:50, z:2 },
+                    { id: 'shelf3', shape: 'shape-rack-shelf', w:80, h:5, x:10, y:80, z:2 },
+                    { id: 'jar1', shape: 'shape-jar', w:5, h:8, x:20, y:12, z:3 },
+                    { id: 'jar2', shape: 'shape-jar', w:5, h:8, x:30, y:12, z:3 },
+                    { id: 'jar3', shape: 'shape-jar', w:6, h:10, x:60, y:40, z:3 },
+                    { id: 'box1', bg:'#4e342e', w:12, h:12, x:15, y:38, z:3, style:'border:1px solid #3e2723;' },
+                    { id: 'inv', type: 'poster-paper', text:'УЧЁТ', w:6, h:6, x:5, y:35, z:1 }
+                ]
+            }
+        ];
+
+        let currentLevel = 0;
+        let currentCam = 0;
+        let anomalyData = { active: false, type: 'none', roomId: -1, description: '', specificId: '' };
+        let anomalyTimer = null;
+        let isGameOver = false;
+        let buttonsLocked = false; 
+
+        // --- AUDIO SYSTEM (MIXED LEVELS) ---
+        const AudioSys = {
+            ctx: null, masterGain: null, currentLoopNode: null,
+            droneNodes: [],
+            radioGain: null,
+            radioOsc: null,
+            init: function() {
+                if(!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    this.masterGain = this.ctx.createGain();
+                    this.masterGain.connect(this.ctx.destination);
+                    this.initRadio();
+                }
+                if(this.ctx.state === 'suspended') this.ctx.resume();
+            },
+            initRadio: function() {
+                // Radio Setup (Independent Sequencer)
+                this.radioGain = this.ctx.createGain();
+                this.radioGain.gain.value = 0; // Starts muted
+                
+                // Low-fi filter
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 1000;
+                filter.Q.value = 1;
+                
+                this.radioGain.connect(filter);
+                filter.connect(this.masterGain);
+
+                // Simple Sequencer for "Jingle Bells" (Simplified)
+                const notes = [
+                    329, 329, 329, 0, // E E E
+                    329, 329, 329, 0, // E E E
+                    329, 392, 261, 293, 329, 0, 0, 0, // E G C D E
+                    349, 349, 349, 349, // F F F F
+                    349, 329, 329, 329, // F E E E
+                    329, 293, 293, 329, 293, 392 // E D D E D G
+                ];
+                let noteIdx = 0;
+                
+                // Play logic
+                setInterval(() => {
+                    if(!this.ctx) return;
+                    const freq = notes[noteIdx];
+                    noteIdx = (noteIdx + 1) % notes.length;
+                    
+                    if(freq > 0) {
+                        const osc = this.ctx.createOscillator();
+                        osc.type = 'square';
+                        osc.frequency.value = freq;
+                        const g = this.ctx.createGain();
+                        g.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                        g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.3);
+                        
+                        osc.connect(g);
+                        g.connect(this.radioGain);
+                        osc.start();
+                        osc.stop(this.ctx.currentTime + 0.3);
+                    }
+                }, 300); // Speed of song
+            },
+            updateRadioVolume: function(camId) {
+                if(!this.radioGain) return;
+                // Cam 5 is index 5 (Podval/Basement)
+                if(camId === 5) {
+                    // Ramp up volume
+                    this.radioGain.gain.setTargetAtTime(0.5, this.ctx.currentTime, 0.1);
+                } else {
+                    // Mute
+                    this.radioGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1);
+                }
+            },
+            startDarkAmbience: function() {
+                if(this.droneNodes.length > 0) return;
+                const osc1 = this.ctx.createOscillator(); osc1.type = 'sine'; osc1.frequency.value = 50; 
+                const osc2 = this.ctx.createOscillator(); osc2.type = 'triangle'; osc2.frequency.value = 53; 
+                const bSize = this.ctx.sampleRate * 2; const b = this.ctx.createBuffer(1, bSize, this.ctx.sampleRate);
+                const d = b.getChannelData(0); for(let i=0; i<bSize; i++) d[i] = (Math.random() * 2 - 1) * 0.02; 
+                const noise = this.ctx.createBufferSource(); noise.buffer = b; noise.loop = true;
+                const droneGain = this.ctx.createGain(); droneGain.gain.value = 0.2; 
+                osc1.connect(droneGain); osc2.connect(droneGain); noise.connect(droneGain); droneGain.connect(this.masterGain);
+                osc1.start(); osc2.start(); noise.start();
+                this.droneNodes = [osc1, osc2, noise];
+            },
+            playClick: function() {
+                if(!this.ctx) return;
+                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                osc.type = 'square'; osc.frequency.value = 100; 
+                gain.gain.setValueAtTime(0.05, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.05);
+                osc.connect(gain); gain.connect(this.masterGain); osc.start(); osc.stop(this.ctx.currentTime + 0.05);
+            },
+            stopScaryLoop: function() {
+                if (this.currentLoopNode) { try { this.currentLoopNode.stop(); } catch(e){} this.currentLoopNode = null; }
+            },
+            playScarySound: function(type, loop = false) {
+                if(!this.ctx) this.init();
+                this.stopScaryLoop();
+                
+                let vol = 0.30; 
+                let bSize, b, d, noise, filt;
+
+                if(type === 'breathing') {
+                    bSize = this.ctx.sampleRate * 2; b = this.ctx.createBuffer(1, bSize, this.ctx.sampleRate);
+                    d = b.getChannelData(0); for(let i=0; i<bSize; i++) d[i] = (Math.random() * 2 - 1);
+                    noise = this.ctx.createBufferSource(); noise.buffer = b; noise.loop = loop;
+                    filt = this.ctx.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 400;
+                    const gain = this.ctx.createGain(); gain.gain.value = vol; 
+                    noise.connect(filt); filt.connect(gain); gain.connect(this.masterGain); noise.start();
+                    this.currentLoopNode = noise;
+                } else if (type === 'thud') {
+                    const osc = this.ctx.createOscillator(); osc.type = 'square'; osc.frequency.value = 40;
+                    const gain = this.ctx.createGain(); gain.gain.value = vol;
+                    osc.connect(gain); gain.connect(this.masterGain); osc.start();
+                    this.currentLoopNode = osc;
+                } else if (type === 'whine') {
+                    const osc = this.ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.value = 8000;
+                    const gain = this.ctx.createGain(); gain.gain.value = vol;
+                    osc.connect(gain); gain.connect(this.masterGain); osc.start();
+                    this.currentLoopNode = osc;
+                } else if (type === 'whisper') {
+                    bSize = this.ctx.sampleRate * 1; b = this.ctx.createBuffer(1, bSize, this.ctx.sampleRate);
+                    d = b.getChannelData(0); for(let i=0; i<bSize; i++) d[i] = (Math.random() * 2 - 1);
+                    noise = this.ctx.createBufferSource(); noise.buffer = b; noise.loop = loop;
+                    filt = this.ctx.createBiquadFilter(); filt.type = 'highpass'; filt.frequency.value = 1200;
+                    const gain = this.ctx.createGain(); gain.gain.value = vol;
+                    noise.connect(filt); filt.connect(gain); gain.connect(this.masterGain); noise.start();
+                    this.currentLoopNode = noise;
+                } else if (type === 'steps') {
+                    const osc = this.ctx.createOscillator(); osc.type = 'triangle'; osc.frequency.value = 60;
+                    const gain = this.ctx.createGain(); gain.gain.value = 0.75; // LOUD STEPS
+                    osc.connect(gain); gain.connect(this.masterGain);
+                    osc.start(); setTimeout(()=>osc.stop(), 100); setTimeout(()=> {
+                         const osc2 = this.ctx.createOscillator(); osc2.type='triangle'; osc2.frequency.value=55;
+                         const g2 = this.ctx.createGain(); g2.gain.value=0.6;
+                         osc2.connect(g2); g2.connect(this.masterGain); osc2.start(); setTimeout(()=>osc2.stop(),100);
+                    }, 500);
+                } else if (type === 'laugh') {
+                    bSize = this.ctx.sampleRate * 2; b = this.ctx.createBuffer(1, bSize, this.ctx.sampleRate);
+                    d = b.getChannelData(0); for(let i=0; i<bSize; i++) d[i] = (Math.random() * 2 - 1) * Math.sin(i/100);
+                    noise = this.ctx.createBufferSource(); noise.buffer = b; noise.loop = false;
+                    filt = this.ctx.createBiquadFilter(); filt.type = 'bandpass'; filt.frequency.value = 1000;
+                    const gain = this.ctx.createGain(); gain.gain.value = vol;
+                    noise.connect(filt); filt.connect(gain); gain.connect(this.masterGain); noise.start();
+                }
+
+                if (!loop) setTimeout(() => { if(this.currentLoopNode === this.currentLoopNode) this.stopScaryLoop(); }, 2000);
+            },
+            playJump: function() {
+                if(!this.ctx) this.init();
+                const osc = this.ctx.createOscillator(); osc.type='sawtooth'; osc.frequency.value=100; // Low buzz
+                osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.1); // Screech up
+                const g = this.ctx.createGain(); g.gain.value=0.8; // Loud
+                osc.connect(g); g.connect(this.masterGain);
+                osc.start(); osc.stop(this.ctx.currentTime+0.5);
+            }
+        };
+
+        // --- ИГРОВАЯ ЛОГИКА ---
+        function initGame() {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(err => { console.log("Fullscreen blocked"); });
+            }
+            document.getElementById('fullscreen-msg').style.display = 'none';
+            isGameOver = false;
+            AudioSys.init();
+            AudioSys.startDarkAmbience(); 
+            
+            const mount = document.getElementById('rooms-mount');
+            mount.innerHTML = '';
+            
+            ROOM_LAYOUTS.forEach((layout, idx) => {
+                const r = document.createElement('div');
+                r.className = 'room-container';
+                r.id = `room-${idx}`;
+                if(idx === 0) r.classList.add('visible');
+                
+                // Add room shadow/vignette inside
+                const shadow = document.createElement('div'); shadow.className = 'room-shadow';
+                
+                const w = document.createElement('div'); w.className = 'wall'; 
+                if(layout.wall.includes('wall-') || layout.wall === 'grunge') w.classList.add(layout.wall); else w.style.background = layout.wall;
+                const f = document.createElement('div'); f.className = 'floor';
+                r.appendChild(w); r.appendChild(f);
+                r.appendChild(shadow); // Append shadow after background
+
+                layout.items.forEach((item, itemIdx) => { if(!item.childOf) createObject(r, item, idx, itemIdx); });
+                layout.items.forEach((item, itemIdx) => {
+                    if(item.childOf) {
+                        const parent = document.getElementById(`r${idx}-${item.childOf}`);
+                        if(parent) {
+                            const el = document.createElement('div');
+                            el.className = item.className || '';
+                            if(item.id) el.id = `r${idx}-${item.id}`; 
+                            parent.appendChild(el);
+                        }
+                    }
+                });
+                mount.appendChild(r);
+            });
+            startLevel(0);
+            setInterval(updateTime, 1000);
+
+             // JUMPSCARE LOOP (5% every 30s)
+             setInterval(() => {
+                if(!isGameOver && !buttonsLocked && Math.random() < 0.05) {
+                    triggerJumpscare();
+                }
+            }, 30000);
+        }
+
+        function triggerJumpscare() {
+            const j = document.getElementById('jumpscare-layer');
+            j.style.display = 'flex';
+            AudioSys.playJump();
+            setTimeout(() => { j.style.display = 'none'; }, 400);
+        }
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('time-display').innerText = now.toLocaleTimeString('ru-RU', {hour12:false});
+        }
+
+        function createObject(parent, item, roomId, objIdPrefix) {
+            const el = document.createElement('div');
+            el.className = `obj ${item.type || ''} ${item.shape || ''} ${item.className || ''}`;
+            el.id = `r${roomId}-${item.id}`; 
+            el.style.left = item.x + '%';
+            el.style.top = item.y + '%';
+            el.style.width = item.w + '%';
+            el.style.height = item.h + '%';
+            el.style.zIndex = item.z;
+            if(item.bg) el.style.background = item.bg;
+            if(item.color) el.style.color = item.color;
+            if(item.text) el.innerText = item.text;
+            if(item.style) el.style.cssText += item.style;
+            
+            el.dataset.origLeft = item.x + '%';
+            el.dataset.origTop = item.y + '%';
+            el.dataset.origW = item.w + '%';
+            el.dataset.origH = item.h + '%';
+            el.dataset.origText = item.text || '';
+            el.dataset.origClass = el.className;
+            el.dataset.origTransform = item.style && item.style.includes('transform') ? item.style.match(/transform:\s*([^;]+)/)[1] : 'none';
+            el.dataset.origOpacity = item.style && item.style.includes('opacity') ? item.style.match(/opacity:\s*([^;]+)/)[1] : '1';
+            el.dataset.origRadius = el.style.borderRadius || '';
+            el.dataset.origColor = el.style.color || '';
+            el.dataset.origBg = el.style.backgroundColor || '';
+            el.dataset.origDisplay = 'block';
+            
+            parent.appendChild(el);
+        }
+
+        function startLevel(lvl) {
+            currentLevel = lvl;
+            buttonsLocked = true;
+            document.getElementById('clean-btn').classList.add('btn-locked');
+            document.getElementById('report-btn').classList.add('btn-locked');
+            document.getElementById('clean-btn').innerText = "ЖДИТЕ..."; 
+
+            document.getElementById('level-indicator').innerText = `LVL ${lvl}/${MAX_LEVEL}`;
+            document.getElementById('status-display').innerText = "ЗАГРУЗКА...";
+            document.getElementById('status-display').style.color = "#555";
+            
+            resetRooms();
+            if(anomalyTimer) clearTimeout(anomalyTimer);
+            anomalyTimer = null;
+
+            const st = document.getElementById('static');
+            st.classList.add('static-active');
+            AudioSys.playClick();
+            
+            setTimeout(() => {
+                st.classList.remove('static-active');
+                document.getElementById('status-display').innerText = "В НОРМЕ";
+                document.getElementById('status-display').style.color = "#2a2";
+                scheduleAnomaly();
+            }, 300);
+
+            setTimeout(() => {
+                buttonsLocked = false;
+                document.getElementById('clean-btn').classList.remove('btn-locked');
+                document.getElementById('report-btn').classList.remove('btn-locked');
+                document.getElementById('clean-btn').innerText = "ЧИСТО"; 
+            }, 5000); 
+        }
+
+        function resetRooms() {
+            AudioSys.stopScaryLoop();
+            document.querySelectorAll('.temp-anomaly').forEach(el => el.remove());
+            document.getElementById('glitch-layer').style.display = 'none';
+            document.querySelectorAll('.obj').forEach(el => {
+                el.style.left = el.dataset.origLeft; el.style.top = el.dataset.origTop;
+                el.style.width = el.dataset.origW; el.style.height = el.dataset.origH;
+                if(el.dataset.origText) el.innerText = el.dataset.origText;
+                el.className = el.dataset.origClass;
+                el.style.transform = el.dataset.origTransform === 'undefined' ? 'none' : el.dataset.origTransform;
+                el.style.opacity = el.dataset.origOpacity;
+                el.style.display = 'block'; el.style.filter = '';
+                el.style.borderRadius = el.dataset.origRadius;
+                el.style.color = el.dataset.origColor;
+                el.style.animation = 'none'; 
+                // Restore animation for snow and bulb if any
+                if(el.className.includes('snow-bg')) el.style.animation = "snowfall 5s linear infinite";
+
+                if(el.className.includes('poster') && !el.className.includes('paper')) {
+                     el.style.backgroundColor = "#ccc";
+                     if(el.id && el.id.includes('poster_g')) el.style.backgroundColor = '#111';
+                } else {
+                     el.style.backgroundColor = el.dataset.origBg;
+                }
+            });
+            document.querySelectorAll('.room-container').forEach(r => { 
+                r.style.filter = 'brightness(0.9) contrast(1.1) sepia(0.1)'; 
+                r.classList.remove('filter-blood', 'filter-dark', 'filter-invert', 'filter-sepia', 'filter-blur', 'filter-noise');
+            });
+            anomalyData = { active: false, type: 'none', roomId: -1, description: '', specificId: '' };
+        }
+
+        function scheduleAnomaly() {
+            if(Math.random() > 0.3) { 
+                const delay = Math.random() * 10000 + 5000;
+                anomalyTimer = setTimeout(triggerAnomaly, delay);
+            } else {
+                anomalyData.type = 'none'; anomalyData.active = false;
+                anomalyTimer = null; 
+                console.log("CLEAN LEVEL");
+            }
+        }
+
+        function changeText(txt, bg, col) {
+            const p = document.getElementById(`room-${anomalyData.roomId}`).querySelector('.poster, .poster-paper');
+            if(p) { 
+                p.innerText = txt; 
+                if(bg) p.style.background = bg; 
+                if(col) p.style.color = col; 
+            } else { 
+                const t = document.createElement('div'); 
+                t.className = 'obj temp-anomaly scary-text'; 
+                t.innerText = txt; 
+                t.style.top = '50%'; 
+                t.style.left = '50%'; 
+                if(col) t.style.color = col;
+                document.getElementById(`room-${anomalyData.roomId}`).appendChild(t); 
+            }
+        }
+
+        function triggerAnomaly() {
+            anomalyTimer = null;
+            if(isGameOver) return;
+            anomalyData.active = true;
+            const roomId = Math.floor(Math.random() * ROOM_LAYOUTS.length);
+            const roomEl = document.getElementById(`room-${roomId}`);
+            // Exclude decor from manipulation
+            const allObjs = Array.from(roomEl.querySelectorAll('.obj:not([id*="leaf"]):not([id*="tbowl"]):not([id*="ttank"]):not([id*="d-"]):not([id*="fnote"]):not([id*="fh1"]):not([id*="tdec"])')); 
+            const target = allObjs[Math.floor(Math.random() * allObjs.length)];
+            const roomName = ROOM_LAYOUTS[roomId].name;
+            anomalyData.roomId = roomId;
+
+            // --- 60 ТИПОВ АНОМАЛИЙ ---
+            const types = [
+                // GHOST (1-8)
+                { t:'ghost', desc:'Тень в углу', act:()=>{ const g=document.createElement('div'); g.className='ghost-subtle temp-anomaly'; g.style.left=(Math.random()*60+20)+'%'; g.style.top='30%'; roomEl.appendChild(g); }},
+                { t:'ghost', desc:'Белое лицо', act:()=>{ const g=document.createElement('div'); g.className='obj temp-anomaly'; g.style.width='5%'; g.style.height='5%'; g.style.borderRadius='50%'; g.style.background='#fff'; g.style.boxShadow='0 0 10px #fff'; g.style.left=(Math.random()*80)+'%'; g.style.top=(Math.random()*60)+'%'; roomEl.appendChild(g); }},
+                { t:'ghost', desc:'Глаза во тьме', act:()=>{ const g=document.createElement('div'); g.className='glowing-eyes temp-anomaly'; g.style.left=(Math.random()*80)+'%'; g.style.top=(Math.random()*60)+'%'; roomEl.appendChild(g); }},
+                { t:'ghost', desc:'Силуэт (размытый)', act:()=>{ const g=document.createElement('div'); g.className='shadow-corner temp-anomaly'; g.style.left=(Math.random()*80)+'%'; g.style.top='0'; roomEl.appendChild(g); }},
+                { t:'ghost', desc:'Бездна в стене', act:()=>{ const g=document.createElement('div'); g.className='abyss-hole temp-anomaly'; g.style.left=(Math.random()*70+10)+'%'; g.style.top='30%'; roomEl.appendChild(g); }},
+                { t:'ghost', desc:'Левитирующий шар', act:()=>{ const g=document.createElement('div'); g.className='obj temp-anomaly'; g.style.width='6%'; g.style.height='6%'; g.style.borderRadius='50%'; g.style.background='rgba(255,255,255,0.2)'; g.style.boxShadow='0 0 15px white'; g.style.left='50%'; g.style.top='40%'; roomEl.appendChild(g); }},
+                { t:'ghost', desc:'Черная дымка', act:()=>{ const g=document.createElement('div'); g.className='ghost-subtle temp-anomaly'; g.style.background='#000'; g.style.opacity='0.4'; g.style.left='20%'; g.style.top='50%'; roomEl.appendChild(g); }},
+                { t:'ghost', desc:'Прозрачная фигура', act:()=>{ const g=document.createElement('div'); g.className='ghost-subtle temp-anomaly'; g.style.background='#fff'; g.style.opacity='0.1'; g.style.left='70%'; g.style.top='40%'; roomEl.appendChild(g); }},
+
+                // MOVE (9-16) (СИЛЬНЫЕ СДВИГИ)
+                { t:'move', desc:'Предмет на потолке', act:()=>{ if(target) target.style.top='5%'; else triggerAnomaly(); }},
+                { t:'move', desc:'Предмет перевернут', act:()=>{ if(target) target.style.transform += ' rotate(180deg)'; else triggerAnomaly(); }},
+                { t:'move', desc:'Сильный сдвиг вправо', act:()=>{ if(target) target.style.transform += ' translate(25%, 0)'; else triggerAnomaly(); }},
+                { t:'move', desc:'Сильный сдвиг влево', act:()=>{ if(target) target.style.transform += ' translate(-25%, 0)'; else triggerAnomaly(); }},
+                { t:'move', desc:'Сильный сдвиг вверх', act:()=>{ if(target) target.style.transform += ' translate(0, -30%)'; else triggerAnomaly(); }},
+                { t:'move', desc:'Наклон 45', act:()=>{ if(target) target.style.transform += ' rotate(45deg)'; else triggerAnomaly(); }},
+                { t:'move', desc:'Наклон -45', act:()=>{ if(target) target.style.transform += ' rotate(-45deg)'; else triggerAnomaly(); }},
+                { t:'move', desc:'Отражение', act:()=>{ if(target) target.style.transform += ' scaleX(-1)'; else triggerAnomaly(); }},
+
+                // EXTRA (17-25)
+                { t:'extra', desc:'Коробка', act:()=>{ const ex=document.createElement('div'); ex.className='obj temp-anomaly'; ex.style.zIndex=20; ex.style.width='4%'; ex.style.height='5%'; ex.style.background='#333'; ex.style.left=(Math.random()*80)+'%'; ex.style.top='70%'; roomEl.appendChild(ex); }},
+                { t:'extra', desc:'Пятно крови', act:()=>{ const ex=document.createElement('div'); ex.className='blood-stain temp-anomaly'; ex.style.left=(Math.random()*80)+'%'; ex.style.top=(Math.random()*60+20)+'%'; roomEl.appendChild(ex); }},
+                { t:'extra', desc:'Черный куб', act:()=>{ const ex=document.createElement('div'); ex.className='obj temp-anomaly'; ex.style.width='5%'; ex.style.height='5%'; ex.style.background='black'; ex.style.left='50%'; ex.style.top='50%'; roomEl.appendChild(ex); }},
+                { t:'extra', desc:'Насекомое', act:()=>{ const ex=document.createElement('div'); ex.className='obj temp-anomaly'; ex.style.width='2%'; ex.style.height='1%'; ex.style.background='brown'; ex.style.left=(Math.random()*90)+'%'; ex.style.top=(Math.random()*90)+'%'; roomEl.appendChild(ex); }},
+                { t:'extra', desc:'Странная тень', act:()=>{ const ex=document.createElement('div'); ex.className='shadow-corner temp-anomaly'; ex.style.width='50px'; ex.style.height='150px'; ex.style.left='10%'; ex.style.top='40%'; roomEl.appendChild(ex); }},
+                { t:'extra', desc:'Зеленая слизь', act:()=>{ const ex=document.createElement('div'); ex.className='slime-blob temp-anomaly'; ex.style.left=(Math.random()*80)+'%'; ex.style.top=(Math.random()*70)+'%'; roomEl.appendChild(ex); }},
+                { t:'extra', desc:'Трещина', act:()=>{ const ex=document.createElement('div'); ex.className='crack-wall temp-anomaly'; ex.style.left=(Math.random()*80)+'%'; ex.style.top='20%'; roomEl.appendChild(ex); }},
+                { t:'extra', desc:'Кукла', act:()=>{ const ex=document.createElement('div'); ex.className='creepy-doll temp-anomaly'; ex.style.left=(Math.random()*80)+'%'; ex.style.top='65%'; roomEl.appendChild(ex); }},
+                { t:'extra', desc:'Нож', act:()=>{ const ex=document.createElement('div'); ex.className='obj temp-anomaly'; ex.style.width='10px'; ex.style.height='30px'; ex.style.background='silver'; ex.style.clipPath='polygon(50% 0, 100% 100%, 0 100%)'; ex.style.left=(Math.random()*80)+'%'; ex.style.top='60%'; roomEl.appendChild(ex); }},
+
+                // MISSING (26)
+                { t:'missing', desc:'Пропажа', act:()=>{ if(target) target.style.display='none'; else triggerAnomaly(); }},
+
+                // MORPH (27-33)
+                { t:'morph', desc:'Потемнение', act:()=>{ if(target) target.style.filter='brightness(0.2)'; else triggerAnomaly(); }},
+                { t:'morph', desc:'Осветление', act:()=>{ if(target) target.style.filter='brightness(2) contrast(2)'; else triggerAnomaly(); }},
+                { t:'morph', desc:'Увеличение', act:()=>{ if(target) target.style.transform+=' scale(1.5)'; else triggerAnomaly(); }},
+                { t:'morph', desc:'Уменьшение', act:()=>{ if(target) target.style.transform+=' scale(0.5)'; else triggerAnomaly(); }},
+                { t:'morph', desc:'Растяжение (ширина)', act:()=>{ if(target) target.style.transform+=' scaleX(2)'; else triggerAnomaly(); }},
+                { t:'morph', desc:'Растяжение (высота)', act:()=>{ if(target) target.style.transform+=' scaleY(2)'; else triggerAnomaly(); }},
+                { t:'morph', desc:'Инверсия цвета предмета', act:()=>{ if(target) target.style.filter='invert(1)'; else triggerAnomaly(); }},
+
+                // TEXT (34-46)
+                { t:'text', desc:'RUN', act:()=>{ changeText('RUN', '#500'); }},
+                { t:'text', desc:'DIE', act:()=>{ changeText('DIE', 'black', 'red'); }},
+                { t:'text', desc:'HELP', act:()=>{ changeText('HELP'); }},
+                { t:'text', desc:'NO', act:()=>{ changeText('NO'); }},
+                { t:'text', desc:'666', act:()=>{ changeText('666'); }},
+                { t:'text', desc:'BEHIND', act:()=>{ changeText('BEHIND'); }},
+                { t:'text', desc:'YOU', act:()=>{ changeText('YOU'); }},
+                { t:'text', desc:'KILL', act:()=>{ changeText('KILL', 'red'); }},
+                { t:'text', desc:'LOST', act:()=>{ changeText('LOST'); }},
+                { t:'text', desc:'OBEY', act:()=>{ changeText('OBEY'); }},
+                { t:'text', desc:'VOID', act:()=>{ changeText('VOID'); }},
+                { t:'text', desc:'HIDE', act:()=>{ changeText('HIDE'); }},
+                { t:'text', desc:'LIES', act:()=>{ changeText('LIES'); }},
+
+                // CAMERA (47-54)
+                { t:'camera', desc:'Красный фильтр', act:()=>{ roomEl.classList.add('filter-blood'); }},
+                { t:'camera', desc:'Темнота', act:()=>{ roomEl.classList.add('filter-dark'); }},
+                { t:'camera', desc:'Инверсия экрана', act:()=>{ roomEl.classList.add('filter-invert'); }},
+                { t:'camera', desc:'Сепия', act:()=>{ roomEl.classList.add('filter-sepia'); }},
+                { t:'camera', desc:'Размытие', act:()=>{ roomEl.classList.add('filter-blur'); }},
+                { t:'camera', desc:'Зернистость', act:()=>{ roomEl.classList.add('filter-noise'); }},
+                { t:'camera', desc:'Пиксели', act:()=>{ roomEl.style.filter='contrast(2.0) brightness(0.7)'; }},
+                { t:'camera', desc:'Свет', act:()=>{ roomEl.style.filter='brightness(2.0)'; }},
+
+                // INTRUDER (55-59)
+                { t:'intruder', desc:'Человек в двери', act:()=>{ const win = roomEl.querySelector('.window, .door'); if(win) { const f = document.createElement('div'); f.className = 'intruder-dark temp-anomaly'; win.appendChild(f); } else triggerAnomaly(); }},
+                { t:'intruder', desc:'Рука', act:()=>{ const h=document.createElement('div'); h.className='obj temp-anomaly'; h.style.width='5%'; h.style.height='20%'; h.style.background='#111'; h.style.right='0'; h.style.top='50%'; roomEl.appendChild(h); }},
+                { t:'intruder', desc:'Дверь открыта', act:()=>{ const d=roomEl.querySelector('[id*="door"]'); if(d) { d.style.transform='perspective(200px) rotateY(-40deg)'; d.style.background='#000'; } else triggerAnomaly(); }},
+                { t:'intruder', desc:'Лицо в камеру', act:()=>{ const f=document.createElement('div'); f.className='obj temp-anomaly'; f.style.width='40%'; f.style.height='60%'; f.style.background='#000'; f.style.opacity='0.5'; f.style.borderRadius='50%'; f.style.left='30%'; f.style.top='20%'; roomEl.appendChild(f); }},
+                { t:'intruder', desc:'Высокая фигура', act:()=>{ const f=document.createElement('div'); f.className='obj temp-anomaly'; f.style.width='5%'; f.style.height='50%'; f.style.background='#000'; f.style.left='10%'; f.style.top='20%'; roomEl.appendChild(f); }},
+
+                // SOUND (60-66)
+                { t:'sound', desc:'Дыхание', act:()=>{ if(currentCam===roomId) AudioSys.playScarySound('breathing', true); anomalyData.soundType='breathing'; }},
+                { t:'sound', desc:'Стук', act:()=>{ if(currentCam===roomId) AudioSys.playScarySound('thud', true); anomalyData.soundType='thud'; }},
+                { t:'sound', desc:'Писк', act:()=>{ if(currentCam===roomId) AudioSys.playScarySound('whine', true); anomalyData.soundType='whine'; }},
+                { t:'sound', desc:'Шепот', act:()=>{ if(currentCam===roomId) AudioSys.playScarySound('whisper', true); anomalyData.soundType='whisper'; }},
+                { t:'sound', desc:'Шаги', act:()=>{ if(currentCam===roomId) AudioSys.playScarySound('steps', true); anomalyData.soundType='steps'; }},
+                { t:'sound', desc:'Смех', act:()=>{ if(currentCam===roomId) AudioSys.playScarySound('laugh', true); anomalyData.soundType='laugh'; }},
+            ];
+
+            // Выбор случайной аномалии
+            const ev = types[Math.floor(Math.random() * types.length)];
+            anomalyData.type = ev.t;
+            anomalyData.description = ev.desc;
+            console.log("ANOMALY: " + ev.t + " (" + ev.desc + ")");
+            ev.act();
+        }
+
+        function switchCam(id) {
+            AudioSys.playClick();
+            AudioSys.stopScaryLoop();
+            
+            // RADIO LOGIC: Only allow radio volume in Cam 5 (Basement/Podval)
+            AudioSys.updateRadioVolume(id);
+
+            if(anomalyData.active && anomalyData.type === 'sound' && anomalyData.roomId === id) {
+                AudioSys.playScarySound(anomalyData.soundType, true);
+            }
+            document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.cam-btn')[id].classList.add('active');
+            document.querySelectorAll('.room-container').forEach(r => r.classList.remove('visible'));
+            document.getElementById(`room-${id}`).classList.add('visible');
+            currentCam = id;
+            document.getElementById('cam-info').innerText = `КАМ 0${id+1}`;
+            const st = document.getElementById('static'); st.classList.add('static-active'); setTimeout(() => st.classList.remove('static-active'), 150);
+        }
+
+        function toggleReport() { const el = document.getElementById('report-overlay'); el.style.display = el.style.display === 'flex' ? 'none' : 'flex'; }
+        function toggleGuide() { const el = document.getElementById('guide-overlay'); el.style.display = el.style.display === 'flex' ? 'none' : 'flex'; }
+
+        function checkAnswer(userChoice) {
+            if(buttonsLocked) return;
+
+            document.getElementById('report-overlay').style.display = 'none';
+            if(userChoice === 'none') {
+                if(anomalyData.active) {
+                     let roomName = "???";
+                     if(anomalyData.roomId !== -1) roomName = ROOM_LAYOUTS[anomalyData.roomId].name;
+                     gameOver(false, `Пропущено: ${anomalyData.description}\nКомната: ${roomName}`);
+                } else if (anomalyTimer !== null) {
+                     gameOver(false, "Слишком рано! Аномалия была уже рядом.");
+                } else {
+                     nextLevel();
+                }
+                return;
+            }
+            
+            if(!anomalyData.active) { gameOver(false, "Аномалий нет."); return; }
+            if(anomalyData.roomId !== currentCam) { 
+                let realRoom = ROOM_LAYOUTS[anomalyData.roomId].name;
+                gameOver(false, `Аномалия в другой комнате (${realRoom}).`); 
+                return; 
+            }
+            
+            let isCorrect = (userChoice === anomalyData.type);
+            if(anomalyData.type === 'ghost' && userChoice === 'intruder') isCorrect = true; 
+            if(anomalyData.type === 'intruder' && userChoice === 'ghost') isCorrect = true; 
+            if(anomalyData.type === 'camera' && userChoice === 'ghost') isCorrect = false; 
+
+            if(isCorrect) {
+                nextLevel(); 
+            } else {
+                let roomName = ROOM_LAYOUTS[anomalyData.roomId].name;
+                gameOver(false, `Неверный тип.\nЭто было: ${anomalyData.type}\nКомната: ${roomName}`);
+            }
+        }
+
+        function nextLevel() {
+            if(currentLevel >= MAX_LEVEL) gameOver(true, "СМЕНА ЗАВЕРШЕНА");
+            else startLevel(currentLevel + 1);
+        }
+
+        function gameOver(win, reason) {
+            isGameOver = true;
+            if(anomalyTimer) clearTimeout(anomalyTimer);
+            AudioSys.stopScaryLoop();
+            const scr = document.getElementById('fullscreen-msg'); scr.style.display = 'flex'; scr.innerHTML = '';
+            const h1 = document.createElement('h1'); h1.style.color = win ? '#2a2' : '#a22'; h1.innerText = win ? "УСПЕХ" : "ПРОВАЛ";
+            const p = document.createElement('div'); p.style.color = '#ccc'; p.style.whiteSpace = "pre-wrap"; p.innerText = reason;
+            const btn = document.createElement('button'); btn.innerText = "ЗАНОВО"; btn.onclick = () => location.reload();
+            btn.style.marginTop = "20px"; btn.style.padding = "10px 30px";
+            scr.appendChild(h1); scr.appendChild(p); scr.appendChild(btn);
+        }
+    </script>
+</body>
+</html>
+<!-- END OF FILE ai_studio_code (Christmas_Graphics_Update).html -->
